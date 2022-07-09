@@ -1,41 +1,32 @@
-package com.example.thoughtscloset;
+package com.example.argumentmapper;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.ArrayList;
-import java.util.List;
 
-class InductiveNode implements Parcelable {
+class InductiveNode extends MapNode implements Parcelable {
 
-    private String description;
-    private String name;
-    private int weight;
-    private final ArrayList<InductiveNode> children;
-    private InductiveNode parent;
-    private Integer cachedConclusion;
+    protected String description;
+    protected String name;
+    protected int weight;
     private static final int MAX_CHAR_IN_NAME = 57;
 
     InductiveNode(String description)
     {
         this.description = description;
         this.name = "";
-        this.weight = 1;
-        this.children = new ArrayList<InductiveNode>();
     }
     InductiveNode(String description, String name)
     {
         this.description = description;
         this.name = name;
-        this.weight = 1;
-        this.children = new ArrayList<InductiveNode>();
     }
     InductiveNode(String description, String name, int weight)
     {
         this.description = description;
         this.name = name;
         this.weight = weight;
-        this.children = new ArrayList<InductiveNode>();
     }
 
     private InductiveNode(Parcel in)
@@ -45,7 +36,6 @@ class InductiveNode implements Parcelable {
         this.weight = in.readInt();
         ArrayList<InductiveNode> childrenList = new ArrayList<InductiveNode>();
         in.readList(childrenList, InductiveNode.class.getClassLoader());
-        this.children = new ArrayList<InductiveNode>();
         for(InductiveNode child: childrenList)
         {
             addChild(child);
@@ -54,9 +44,6 @@ class InductiveNode implements Parcelable {
 
     public String getDescription() {
         return description;
-    }
-    public int getWeight() {
-        return weight;
     }
     public String getName() {
         String out;
@@ -73,7 +60,9 @@ class InductiveNode implements Parcelable {
             return out.substring(0, MAX_CHAR_IN_NAME) + "...";
         }
     }
-
+    public int getWeight() {
+        return weight;
+    }
     public String getFullName()
     {
         return name;
@@ -90,42 +79,7 @@ class InductiveNode implements Parcelable {
         updateConclusion();
     }
 
-    public void addChild(InductiveNode child)
-    {
-        children.add(child);
-        child.setParent(this);
-    }
-    public void removeChild(InductiveNode child)
-    {
-        children.remove(child);
-        child.setParent(null);
-    }
-    public InductiveNode getParent()
-    {
-        return parent;
-    }
-    protected void setParent(InductiveNode node)
-    {
-        this.parent = node;
-    }
-    public List<InductiveNode> getChildren()
-    {
-        return children;
-    }
-
-    protected boolean hasCachedConclusion()
-    {
-        return cachedConclusion != null;
-    }
-
-    protected int getCachedConclusion()
-    {
-        return cachedConclusion;
-    }
-
-    private void saveCachedConclusion(int conclusion){
-        cachedConclusion = conclusion;
-    }
+    @Override
     public int getConclusion()
     {
         if(hasCachedConclusion())
@@ -159,21 +113,6 @@ class InductiveNode implements Parcelable {
         }
     }
 
-    public void updateConclusion()
-    {
-        this.cachedConclusion = null;
-        InductiveNode updatedNode = parent;
-        int oldConclusion;
-        int newConclusion;
-        do {
-            if (updatedNode == null || !updatedNode.hasCachedConclusion()) return;
-            oldConclusion = updatedNode.getCachedConclusion();
-            updatedNode.cachedConclusion = null;
-            newConclusion = updatedNode.getConclusion();
-            updatedNode = updatedNode.getParent();
-        }while(oldConclusion != newConclusion);
-    }
-
     @Override
     public int describeContents() {
         return 0;
@@ -192,7 +131,6 @@ class InductiveNode implements Parcelable {
         public InductiveNode createFromParcel(Parcel in) {
             return new InductiveNode(in);
         }
-
         public InductiveNode[] newArray(int size) {
             return new InductiveNode[size];
         }

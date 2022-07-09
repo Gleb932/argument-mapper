@@ -1,4 +1,4 @@
-package com.example.thoughtscloset;
+package com.example.argumentmapper;
 
 import android.animation.ArgbEvaluator;
 import android.content.Intent;
@@ -35,8 +35,8 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     private GraphAdapter graphAdapter;
     private LayoutInflater inflater;
     private InductiveNode root;
-    private InductiveNode editingNode;
-    private Node contextVisual;
+    private MapNode editingNode;
+    private dev.bandb.graphview.graph.Node contextVisual;
     private Graph graph;
     private final static int baseColor = Color.parseColor("#565656");
     private final static int positiveColor = Color.parseColor("#008577");
@@ -75,12 +75,12 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         argumentMapView.setAdapter(graphAdapter);
     }
 
-    private void fillGraph(Graph graph, InductiveNode root)
+    private void fillGraph(Graph graph, MapNode root)
     {
-        List<InductiveNode> currentLayer = new ArrayList<>();
+        List<MapNode> currentLayer = new ArrayList<>();
         currentLayer.add(root);
-        List<InductiveNode> children;
-        InductiveNode parent;
+        List<MapNode> children;
+        MapNode parent;
         for(int i = 0; i < currentLayer.size(); i++)
         {
             parent = currentLayer.get(i);
@@ -91,7 +91,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
                 graph.addNode(parentVisual);
                 continue;
             }
-            for(InductiveNode child:children) {
+            for(MapNode child:children) {
                 currentLayer.add(child);
                 Node childVisual = new Node(child);
                 graph.addEdge(parentVisual, childVisual);
@@ -148,8 +148,8 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
             registerForContextMenu(itemView);
-            tvName = (TextView) itemView.findViewById(R.id.tvName);
-            layout = (LinearLayout) itemView.findViewById(R.id.layout);
+            tvName = itemView.findViewById(R.id.tvName);
+            layout = itemView.findViewById(R.id.layout);
         }
 
         @Override
@@ -177,8 +177,8 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     private void removeNode(Node visualNode)
     {
         if(visualNode.getData() == root) return;
-        InductiveNode nodeToRemove = ((InductiveNode)visualNode.getData());
-        InductiveNode parent = nodeToRemove.getParent();
+        MapNode nodeToRemove = ((MapNode)visualNode.getData());
+        MapNode parent = nodeToRemove.getParent();
         parent.removeChild(nodeToRemove);
         parent.updateConclusion();
         graph.removeNode(visualNode);

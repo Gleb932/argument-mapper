@@ -1,4 +1,4 @@
-package com.example.thoughtscloset;
+package com.example.argumentmapper;
 
 import android.app.Activity;
 import android.app.AlertDialog;

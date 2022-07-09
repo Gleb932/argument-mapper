@@ -1,4 +1,4 @@
-package com.example.thoughtscloset;
+package com.example.argumentmapper;
 
 public class ArgumentMap {
     private InductiveNode root;

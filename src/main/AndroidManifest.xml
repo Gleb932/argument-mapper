@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.thoughtscloset">
+    package="com.example.argumentmapper">
 
     <application
         android:allowBackup="true"
@@ -10,10 +10,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ArgumentMapActivity"
+            android:name="com.example.argumentmapper.ArgumentMapActivity"
             android:label="@string/title_activity_map"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".MainActivity">
+        <activity android:name="com.example.argumentmapper.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

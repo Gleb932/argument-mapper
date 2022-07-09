@@ -1,4 +1,4 @@
-package com.example.thoughtscloset;
+package com.example.argumentmapper;
 
 import androidx.fragment.app.FragmentManager;
 import androidx.appcompat.app.AppCompatActivity;

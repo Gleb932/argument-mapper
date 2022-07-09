@@ -1,4 +1,4 @@
-package com.example.thoughtscloset;
+package com.example.argumentmapper;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;
