@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ArgumentMapView">
+        <attr name="backgroundColor" format="color" />
+        <attr name="nodeBackgroundColor" format="color" />
+        <attr name="nodeTextColor" format="color" />
+        <attr name="trueColor" format="color" />
+        <attr name="falseColor" format="color" />
+    </declare-styleable>
+</resources>

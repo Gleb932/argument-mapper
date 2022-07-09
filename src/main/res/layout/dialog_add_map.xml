@@ -17,7 +17,7 @@
             android:textColor="#fff"
             android:gravity="center"
             android:textSize="25sp"
-            android:text="@string/dialog_add_title"
+            android:text="@string/dialog_add_map_title"
             />
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -28,49 +28,26 @@
             android:paddingEnd="20dp"
             android:layout_marginTop="20dp">
 
-            <RadioGroup
-                android:id="@+id/radioGroup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="20dp">
-
-                <RadioButton
-                    android:id="@+id/radioReasoning"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Reasoning"/>
-
-                <RadioButton
-                    android:id="@+id/radioThought"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="Thought"/>
-
-            </RadioGroup>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/dialog_add_first_label"
+                android:text="@string/dialog_add_map_first_label"
                 />
 
             <EditText
-                android:id="@+id/etDescription"
+                android:id="@+id/etTopic"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
                 />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/dialog_add_third_label"
+                android:text="@string/dialog_add_map_second_label"
                 />
 
             <EditText
-                android:id="@+id/etTags"
+                android:id="@+id/etDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"

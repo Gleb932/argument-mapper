@@ -2,36 +2,43 @@ package com.example.thoughtscloset;
 
 import androidx.fragment.app.FragmentManager;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
 import android.os.Bundle;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements AddItemDialogListener{
+public class MainActivity extends AppCompatActivity implements AddArgumentMapDialogListener {
 
-    private RecyclerView mainList;
-    private RecyclerView.Adapter recyclerAdapter;
-    private RecyclerView.LayoutManager layoutManager;
-    private List<RecyclerViewItem> items = new ArrayList<>();
-
+    private ListView mainList;
+    private ArrayAdapter<ArgumentMap> listAdapter;
+    private final List<ArgumentMap> items = new ArrayList<>();
+    private ArgumentMap editingMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainList = findViewById(R.id.mainList);
-        mainList.setHasFixedSize(true);
 
-        layoutManager = new LinearLayoutManager(this);
-        mainList.setLayoutManager(layoutManager);
+        listAdapter = new MainListAdapter(this, items);
+        mainList.setAdapter(listAdapter);
 
-        recyclerAdapter = new MainListAdapter(items, this);
-        mainList.setAdapter(recyclerAdapter);
+        mainList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ArgumentMap selected = ((ArgumentMap)mainList.getItemAtPosition(position));
+                openArgumentMap(selected);
+            }
+        });
     }
 
     @Override
@@ -44,25 +51,37 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogList
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.add_button) {
-
-            showAddItemDialog();
+            showAddArgumentMapDialog();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
-    void showAddItemDialog()
+    private void showAddArgumentMapDialog()
     {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        AddItemDialog newFragment = new AddItemDialog();
+        AddArgumentMapDialog newFragment = new AddArgumentMapDialog();
         newFragment.show(fragmentManager, "dialog");
     }
 
+    private void openArgumentMap(ArgumentMap map)
+    {
+        Intent intent = new Intent(this, ArgumentMapActivity.class);
+        intent.putExtra("rootNode", map.getRoot());
+        editingMap = map;
+        this.startActivityForResult(intent, 0);
+    }
+
     @Override
-    public void onFinishAddItemDialog(RecyclerViewItem item) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        editingMap.setRoot((InductiveNode) data.getParcelableExtra("rootNode"));
+        listAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onFinishAddArgumentMapDialog(ArgumentMap item) {
         items.add(item);
     }
 }

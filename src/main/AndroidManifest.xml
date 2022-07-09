@@ -10,9 +10,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ReasoningActivity"
-            android:label="@string/title_activity_reasoning"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:name=".ArgumentMapActivity"
+            android:label="@string/title_activity_map"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

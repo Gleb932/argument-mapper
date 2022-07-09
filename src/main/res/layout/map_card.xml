@@ -4,10 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorBackgroundCard"
+    android:background="@color/colorNeutral"
     android:layout_marginStart="@dimen/card_view_margin"
     android:layout_marginEnd="@dimen/card_view_margin"
-    android:layout_marginTop="@dimen/card_view_margin"
     card_view:cardElevation="10dp">
 
     <androidx.appcompat.widget.LinearLayoutCompat
@@ -15,30 +14,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-
         <TextView
             android:id="@+id/topic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingStart="@dimen/card_view_start_padding"
             android:paddingEnd="@dimen/card_view_start_padding"
-            android:layout_marginBottom="@dimen/card_view_inner_top_margin"/>
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingStart="@dimen/card_view_start_padding"
-                android:paddingEnd="@dimen/card_view_start_padding"
-                android:layout_marginBottom="@dimen/card_view_margin"
-                card_view:singleLine="true">
-
-
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
+            android:layout_marginTop="@dimen/card_view_inner_top_margin"
+            android:layout_marginBottom="@dimen/card_view_inner_bottom_margin"/>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

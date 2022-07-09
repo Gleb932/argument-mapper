@@ -30,4 +30,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.android.material:material:1.2.1'
+    implementation 'dev.bandb.graphview:graphview:0.8.1'
+    implementation 'com.otaliastudios:zoomlayout:1.8.0'
 }
