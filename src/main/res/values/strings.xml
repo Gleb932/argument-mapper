@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ThoughtsCloset</string>
+    <string name="add_chip_text">+</string>
+    <string name="dialog_add_title">New thought</string>
+    <string name="dialog_add_submit">Submit</string>
+    <string name="dialog_add_cancel">Cancel</string>
+</resources>
