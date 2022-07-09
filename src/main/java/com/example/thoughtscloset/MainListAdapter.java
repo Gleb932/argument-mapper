@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -17,15 +18,39 @@ public class MainListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private List<RecyclerViewItem> items;
     private LayoutInflater inflater;
     private Context context;
+    private static ViewGroup.LayoutParams vhChipParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
 
     class ReasoningViewHolder extends RecyclerView.ViewHolder {
-        TextView vTopic, vConclusion;
+        TextView vTopic;
         ChipGroup vChipGroup;
         ReasoningViewHolder(View v) {
             super(v);
             vTopic = v.findViewById(R.id.topic);
-            vConclusion = v.findViewById(R.id.conclusion);
             vChipGroup = v.findViewById(R.id.chipGroup);
+            super.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(context, vTopic.getText(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        void bindTo(Reasoning reasoning)
+        {
+            vTopic.setText(reasoning.getTopic());
+            vChipGroup.removeAllViews();
+            for(String tag: reasoning.tags) {
+                Chip tempChip = new Chip(context);
+                tempChip.setText(tag);
+                tempChip.setLayoutParams(vhChipParams);
+                vChipGroup.addView(tempChip);
+            }
+            super.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(context, vTopic.getText(), Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
     class ThoughtViewHolder extends RecyclerView.ViewHolder {
@@ -35,6 +60,18 @@ public class MainListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             super(v);
             vThought = v.findViewById(R.id.thought);
             vChipGroup = v.findViewById(R.id.chipGroup);
+        }
+
+        void bindTo(Thought thought)
+        {
+            vThought.setText(thought.description);
+            vChipGroup.removeAllViews();
+            for(String tag: thought.tags) {
+                Chip tempChip = new Chip(context);
+                tempChip.setText(tag);
+                tempChip.setLayoutParams(vhChipParams);
+                vChipGroup.addView(tempChip);
+            }
         }
     }
 
@@ -54,13 +91,18 @@ public class MainListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int type) {
+        View newView;
+
         switch(type) {
             case RecyclerViewItem.THOUGHT:
-                return new ThoughtViewHolder(inflater.inflate(R.layout.thought_card, viewGroup, false));
+                newView = inflater.inflate(R.layout.thought_card, viewGroup, false);
+                return new ThoughtViewHolder(newView);
             case RecyclerViewItem.REASONING:
-                return new ReasoningViewHolder(inflater.inflate(R.layout.reasoning_card, viewGroup, false));
+                newView = inflater.inflate(R.layout.reasoning_card, viewGroup, false);
+                return new ReasoningViewHolder(newView);
             default:
-                return new ThoughtViewHolder(inflater.inflate(R.layout.thought_card, viewGroup, false));
+                newView = inflater.inflate(R.layout.thought_card, viewGroup, false);
+                return new ThoughtViewHolder(newView);
         }
     }
 
@@ -70,23 +112,11 @@ public class MainListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         switch(temp.getType())
         {
             case RecyclerViewItem.THOUGHT: {
-                Thought item = (Thought) temp;
-                ThoughtViewHolder vh = (ThoughtViewHolder) viewHolder;
-                vh.vThought.setText(item.description);
-                vh.vChipGroup.removeAllViews();
-                ViewGroup.LayoutParams chipParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-                for(String tag: item.tags) {
-                    Chip tempChip = new Chip(context);
-                    tempChip.setText(tag);
-                    tempChip.setLayoutParams(chipParams);
-                    vh.vChipGroup.addView(tempChip);
-                }
+                ((ThoughtViewHolder) viewHolder).bindTo((Thought) temp);
                 break;
             }
             case RecyclerViewItem.REASONING: {
-                Reasoning item = (Reasoning) temp;
-                ReasoningViewHolder vh = (ReasoningViewHolder) viewHolder;
-                vh.vTopic.setText(item.getTopic());
+                ((ReasoningViewHolder) viewHolder).bindTo((Reasoning) temp);
                 break;
             }
         }

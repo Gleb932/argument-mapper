@@ -14,7 +14,6 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AddItemDialogListener{
 
-    private CanvasView mainImg;
     private RecyclerView mainList;
     private RecyclerView.Adapter recyclerAdapter;
     private RecyclerView.LayoutManager layoutManager;

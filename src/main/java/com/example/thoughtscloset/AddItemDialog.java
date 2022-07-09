@@ -20,7 +20,7 @@ import java.util.List;
 public class AddItemDialog extends AppCompatDialogFragment {
 
     RadioGroup radioGroup;
-    EditText editText1, editText2;
+    EditText etDescription, editText2, etTags;
     int itemType;
     AddItemDialogListener listener;
 
@@ -33,55 +33,45 @@ public class AddItemDialog extends AppCompatDialogFragment {
         listener = (AddItemDialogListener)activity;
 
         final View view = inflater.inflate(R.layout.dialog_add, null);
-        editText1 = view.findViewById(R.id.editText1);
-        editText2 = view.findViewById(R.id.editText2);
+        etDescription = view.findViewById(R.id.etDescription);
+        //editText2 = view.findViewById(R.id.editText2);
+        etTags = view.findViewById(R.id.etTags);
 
         builder.setView(view)
-                .setPositiveButton(R.string.dialog_add_submit, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                        if(itemType == RecyclerViewItem.THOUGHT)
-                        {
-                            List<String> tags;
-                            if(editText2.getText().toString().isEmpty())
-                                tags = new ArrayList();
-                            else
-                                tags = new ArrayList(Arrays.asList(editText2.getText().toString().split(" ")));
-                            Thought newItem = new Thought(editText1.getText().toString(), tags);
-                            listener.onFinishAddItemDialog(newItem);
-                        }else if(itemType == RecyclerViewItem.REASONING)
-                        {
-                            List<String> tags;
-                            if(editText2.getText().toString().isEmpty())
-                                tags = new ArrayList();
-                            else
-                                tags = new ArrayList(Arrays.asList(editText2.getText().toString().split(" ")));
-                            Reasoning newItem = new Reasoning(editText1.getText().toString(), tags);
-                            listener.onFinishAddItemDialog(newItem);
-                        }
-                    }
-                })
-                .setNegativeButton(R.string.dialog_add_cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        AddItemDialog.this.dismiss();
-                    }
-                });
+        .setPositiveButton(R.string.dialog_add_submit, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                if(itemType == RecyclerViewItem.THOUGHT)
+                {
+                    Thought newItem = new Thought(etDescription.getText().toString(), 1, getTags());
+                    listener.onFinishAddItemDialog(newItem);
+                }else if(itemType == RecyclerViewItem.REASONING)
+                {
+                    Reasoning newItem = new Reasoning(etDescription.getText().toString(), getTags());
+                    listener.onFinishAddItemDialog(newItem);
+                }
+            }
+        })
+        .setNegativeButton(R.string.dialog_add_cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                AddItemDialog.this.dismiss();
+            }
+        });
 
         radioGroup = view.findViewById(R.id.radioGroup);
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                editText1.getText().clear();
-                editText2.getText().clear();
+                etDescription.getText().clear();
+                etTags.getText().clear();
                 if(i == R.id.radioThought)
                 {
-                    editText1.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-                    //editText1.setMaxLines(10);
+                    etDescription.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
                     itemType = RecyclerViewItem.THOUGHT;
                 }
                 else if(i == R.id.radioReasoning)
                 {
-                    editText1.setInputType(InputType.TYPE_CLASS_TEXT);
+                    etDescription.setInputType(InputType.TYPE_CLASS_TEXT);
                     itemType = RecyclerViewItem.REASONING;
                 }
             }
@@ -89,5 +79,15 @@ public class AddItemDialog extends AppCompatDialogFragment {
         radioGroup.check(R.id.radioReasoning);
         itemType = RecyclerViewItem.REASONING;
         return builder.create();
+    }
+
+    private List<String> getTags()
+    {
+        List<String> tags;
+        if(etTags.getText().toString().isEmpty())
+            tags = new ArrayList<>();
+        else
+            tags = new ArrayList<>(Arrays.asList(etTags.getText().toString().split(" ")));
+        return tags;
     }
 }

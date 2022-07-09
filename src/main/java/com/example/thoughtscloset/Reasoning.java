@@ -7,12 +7,12 @@ public class Reasoning implements RecyclerViewItem{
     private String topic;
     private boolean conclusion;
     List<String> tags;
-    private List<Argument> arguments;
+    private List<Thought> thoughts;
 
     Reasoning(String topic, List<String> tags)
     {
         this.topic = topic;
-        this.arguments = new ArrayList<>();
+        this.thoughts = new ArrayList<>();
         this.tags = tags;
     }
 
@@ -26,14 +26,14 @@ public class Reasoning implements RecyclerViewItem{
         return conclusion;
     }
 
-    List<Argument> getArguments()
+    List<Thought> getThoughts()
     {
-        return arguments;
+        return thoughts;
     }
 
-    void addArgument(Argument argument)
+    void addThought(Thought thought)
     {
-        arguments.add(argument);
+        thoughts.add(thought);
     }
 
     @Override

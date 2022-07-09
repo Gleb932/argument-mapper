@@ -2,6 +2,18 @@
     <string name="app_name">ThoughtsCloset</string>
     <string name="add_chip_text">+</string>
     <string name="dialog_add_title">New thought</string>
+    <string name="dialog_add_first_label">Description:</string>
+    <string name="dialog_add_second_label">Weight:</string>
+    <string name="dialog_add_third_label">Tags:</string>
     <string name="dialog_add_submit">Submit</string>
     <string name="dialog_add_cancel">Cancel</string>
+    <string name="title_activity_reasoning">ReasoningActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
 </resources>

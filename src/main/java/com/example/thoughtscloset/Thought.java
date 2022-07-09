@@ -3,7 +3,7 @@ package com.example.thoughtscloset;
 import java.util.List;
 
 class Thought implements RecyclerViewItem {
-    Thought(String description, List<String> tags)
+    Thought(String description, int weight, List<String> tags)
     {
         this.description = description;
         this.tags = tags;
