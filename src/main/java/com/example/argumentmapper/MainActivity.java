@@ -3,9 +3,12 @@ package com.example.argumentmapper;
 import androidx.fragment.app.FragmentManager;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -14,6 +17,16 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.google.gson.Gson;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mainList = findViewById(R.id.mainList);
+        registerForContextMenu(mainList);
 
         listAdapter = new MainListAdapter(this, items);
         mainList.setAdapter(listAdapter);
@@ -39,6 +53,10 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                 openArgumentMap(selected);
             }
         });
+
+        FileManager.setContext(getApplicationContext());
+        listAdapter.addAll(FileManager.loadArgumentMaps());
+        listAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -58,6 +76,27 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        menu.setHeaderTitle("Choose action");
+        getMenuInflater().inflate(R.menu.map_context_menu, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        int pos = info.position;
+        switch (item.getItemId()) {
+            case R.id.delete:
+                removeArgumentMap(pos);
+            case R.id.share:
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
     private void showAddArgumentMapDialog()
     {
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -68,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
     private void openArgumentMap(ArgumentMap map)
     {
         Intent intent = new Intent(this, ArgumentMapActivity.class);
-        intent.putExtra("rootNode", map.getRoot());
+        intent.putExtra("map", map);
         editingMap = map;
         this.startActivityForResult(intent, 0);
     }
@@ -76,12 +115,23 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        editingMap.setRoot((InductiveNode) data.getParcelableExtra("rootNode"));
+        ArgumentMap newMap = data.getParcelableExtra("map");
+        editingMap.setRoot(newMap.getRoot());
         listAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void onFinishAddArgumentMapDialog(ArgumentMap item) {
         items.add(item);
+        listAdapter.notifyDataSetChanged();
+        FileManager.saveMapToFile(item);
+    }
+
+    private void removeArgumentMap(int position)
+    {
+        ArgumentMap map = listAdapter.getItem(position);
+        items.remove(position);
+        listAdapter.notifyDataSetChanged();
+        FileManager.deleteArgumentMap(map);
     }
 }

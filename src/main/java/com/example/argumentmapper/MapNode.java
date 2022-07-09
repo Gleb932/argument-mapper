@@ -5,8 +5,8 @@ import java.util.List;
 
 public class MapNode {
     protected ArrayList<MapNode> children;
-    protected MapNode parent;
-    protected Integer cachedConclusion;
+    protected transient MapNode parent;
+    protected transient Integer cachedConclusion;
 
     MapNode()
     {

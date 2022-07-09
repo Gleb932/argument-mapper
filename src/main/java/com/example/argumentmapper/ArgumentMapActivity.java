@@ -34,7 +34,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     private RecyclerView argumentMapView;
     private GraphAdapter graphAdapter;
     private LayoutInflater inflater;
-    private InductiveNode root;
+    private ArgumentMap map;
     private MapNode editingNode;
     private dev.bandb.graphview.graph.Node contextVisual;
     private Graph graph;
@@ -48,7 +48,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        root = getIntent().getParcelableExtra("rootNode");
+        map = getIntent().getParcelableExtra("map");
         inflater = LayoutInflater.from(this);
 
         argumentMapView = findViewById(R.id.treeRecycler);
@@ -70,7 +70,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         argumentMapView.addItemDecoration(new TreeEdgeDecoration(edgeStyle));
 
         graph = new Graph();
-        fillGraph(graph, root);
+        fillGraph(graph, map.getRoot());
         graphAdapter.submitGraph(graph);
         argumentMapView.setAdapter(graphAdapter);
     }
@@ -176,7 +176,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
     private void removeNode(Node visualNode)
     {
-        if(visualNode.getData() == root) return;
+        if(visualNode.getData() == map.getRoot()) return;
         MapNode nodeToRemove = ((MapNode)visualNode.getData());
         MapNode parent = nodeToRemove.getParent();
         parent.removeChild(nodeToRemove);
@@ -208,8 +208,16 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     public void onBackPressed()
     {
         Intent data = new Intent();
-        data.putExtra("rootNode", root);
+        data.putExtra("map", map);
         setResult(RESULT_OK, data);
+        FileManager.saveMapToFile(map);
         finish();
+    }
+
+    @Override
+    protected void onStop()
+    {
+        FileManager.saveMapToFile(map);
+        super.onStop();
     }
 }
