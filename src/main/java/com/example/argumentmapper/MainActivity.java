@@ -90,7 +90,10 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         switch (item.getItemId()) {
             case R.id.delete:
                 removeArgumentMap(pos);
+                return true;
             case R.id.share:
+                Intent intent = new Intent(this, LoginActivity.class);
+                this.startActivity(intent);
                 return true;
             default:
                 return super.onContextItemSelected(item);
