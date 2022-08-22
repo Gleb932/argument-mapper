@@ -1,12 +1,7 @@
 package com.example.argumentmapper;
 
-import androidx.fragment.app.FragmentManager;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -16,31 +11,37 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
-import com.google.gson.Gson;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import com.example.argumentmapper.exceptions.AuthException;
+import com.example.argumentmapper.exceptions.ConnectionException;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
+
 public class MainActivity extends AppCompatActivity implements AddArgumentMapDialogListener {
 
+    @Inject APIService apiService;
     private ListView mainList;
     private ArrayAdapter<ArgumentMap> listAdapter;
     private final List<ArgumentMap> items = new ArrayList<>();
     private ArgumentMap editingMap;
+    private static final String TAG = MainActivity.class.getName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ((ArgumentMapperApplication)getApplication()).getApplicationComponent().inject(this);
         mainList = findViewById(R.id.mainList);
         registerForContextMenu(mainList);
 
@@ -92,8 +93,20 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                 removeArgumentMap(pos);
                 return true;
             case R.id.share:
-                Intent intent = new Intent(this, LoginActivity.class);
-                this.startActivity(intent);
+                apiService.authTest().enqueue(new retrofit2.Callback<ResponseBody>()
+                {
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        if(t instanceof ConnectionException || t instanceof AuthException)
+                        {
+                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        Log.v(TAG, response.isSuccessful() ? "1":"0");
+                    }
+                });
                 return true;
             default:
                 return super.onContextItemSelected(item);

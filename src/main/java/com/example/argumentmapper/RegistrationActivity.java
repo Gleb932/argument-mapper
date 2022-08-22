@@ -1,24 +1,29 @@
 package com.example.argumentmapper;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.argumentmapper.exceptions.AuthException;
+import com.example.argumentmapper.exceptions.ConnectionException;
+
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 
 import javax.inject.Inject;
+
 import okhttp3.ResponseBody;
 
 public class RegistrationActivity extends AppCompatActivity {
 
-    @Inject
-    APIService apiService;
+    @Inject APIService apiService;
     private EditText etEmail, etLogin, etPassword;
     private static final String TAG = LoginActivity.class.getName();
 
@@ -42,18 +47,24 @@ public class RegistrationActivity extends AppCompatActivity {
             apiService.register(email, username, password).enqueue(new retrofit2.Callback<ResponseBody>()
             {
                 @Override
-                public void onFailure(retrofit2.Call<ResponseBody> call, Throwable t) {
-                    t.printStackTrace();
+                public void onFailure(@NotNull retrofit2.Call<ResponseBody> call, @NotNull Throwable t) {
+                    if(t instanceof ConnectionException || t instanceof AuthException)
+                    {
+                        Toast.makeText(RegistrationActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
                 @Override
-                public void onResponse(retrofit2.Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
+                public void onResponse(@NotNull retrofit2.Call<ResponseBody> call, @NotNull retrofit2.Response<ResponseBody> response) {
                     try {
-                        if (!response.isSuccessful()) {
+                        if (response.isSuccessful()) {
+                            RegistrationActivity.this.finish();
+                        }else {
                             JSONObject jsonError = new JSONObject(response.errorBody().string());
-                            Log.v(TAG, jsonError.getString("error"));
+                            Log.v(TAG, jsonError.getString("message"));
                         }
                     } catch (IOException | JSONException e) {
-                        e.printStackTrace();
+                        Toast.makeText(RegistrationActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
+                        Log.v(TAG, e.getMessage());
                     }
                 }
             });

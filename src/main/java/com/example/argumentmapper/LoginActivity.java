@@ -1,12 +1,17 @@
 package com.example.argumentmapper;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.argumentmapper.exceptions.AuthException;
+import com.example.argumentmapper.exceptions.ConnectionException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,6 +27,7 @@ import retrofit2.Response;
 public class LoginActivity extends AppCompatActivity {
 
     @Inject APIService apiService;
+    @Inject SharedPreferences sharedPreferences;
     private EditText etLogin, etPassword;
     private static final String TAG = LoginActivity.class.getName();
 
@@ -45,20 +51,25 @@ public class LoginActivity extends AppCompatActivity {
             {
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    t.printStackTrace();
+                    if(t instanceof ConnectionException || t instanceof AuthException)
+                    {
+                        Toast.makeText(LoginActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     try {
-                        if (!response.isSuccessful()) {
-                            JSONObject jsonError = new JSONObject(response.errorBody().string());
-                            Log.v(TAG, jsonError.getString("error"));
-                        }else {
+                        if (response.isSuccessful()) {
                             JSONObject jsonToken = new JSONObject(response.body().string());
-                            Log.v(TAG, jsonToken.getString("access_token"));
+                            sharedPreferences.edit().putString("access_token", jsonToken.getString("access_token")).apply();
+                            LoginActivity.this.finish();
+                        }else {
+                            JSONObject jsonError = new JSONObject(response.errorBody().string());
+                            Log.v(TAG, jsonError.getString("message"));
                         }
                     } catch (IOException | JSONException e) {
-                        e.printStackTrace();
+                        Toast.makeText(LoginActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();
+                        Log.v(TAG, e.getMessage());
                     }
                 }
             });

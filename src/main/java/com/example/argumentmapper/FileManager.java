@@ -1,7 +1,6 @@
 package com.example.argumentmapper;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,6 +10,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,7 +34,7 @@ public class FileManager {
         String filename = map.getFilename();
         Gson gson = new Gson();
         String fileContents = gson.toJson(map.getRoot(), InductiveNode.class);
-        try (FileOutputStream fos = context.openFileOutput(filename, context.MODE_PRIVATE)) {
+        try (FileOutputStream fos = context.openFileOutput(filename, Context.MODE_PRIVATE)) {
             fos.write(fileContents.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
