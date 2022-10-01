@@ -1,4 +1,4 @@
-package com.example.argumentmapper;
+package com.example.argumentmapper.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +10,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.argumentmapper.APIService;
+import com.example.argumentmapper.ArgumentMapperApplication;
+import com.example.argumentmapper.R;
 import com.example.argumentmapper.exceptions.AuthException;
 import com.example.argumentmapper.exceptions.ConnectionException;
 
@@ -26,7 +29,8 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
-    @Inject APIService apiService;
+    @Inject
+    APIService apiService;
     @Inject SharedPreferences sharedPreferences;
     private EditText etLogin, etPassword;
     private static final String TAG = LoginActivity.class.getName();

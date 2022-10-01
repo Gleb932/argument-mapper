@@ -5,6 +5,7 @@ import java.util.List;
 
 public class MapNode {
     protected ArrayList<MapNode> children;
+    protected transient byte index;
     protected transient MapNode parent;
     protected transient Integer cachedConclusion;
 
@@ -17,11 +18,17 @@ public class MapNode {
     {
         children.add(child);
         child.setParent(this);
+        child.setIndex((byte) (children.size() - 129)); //byte range start -128, -1 because to compensate for 0 index
     }
     public void removeChild(MapNode child)
     {
-        children.remove(child);
+        int pos = children.indexOf(child);
+        children.remove(pos);
         child.setParent(null);
+        for(int i = pos; i < children.size(); ++i)
+        {
+            children.get(i).setIndex((byte)(i - 128));
+        }
     }
     public MapNode getParent()
     {
@@ -34,6 +41,27 @@ public class MapNode {
     public List<MapNode> getChildren()
     {
         return children;
+    }
+    protected byte getIndex()
+    {
+        return this.index;
+    }
+    protected void setIndex(byte index)
+    {
+        this.index = index;
+    }
+    public ArrayList<Byte> getPath()
+    {
+        ArrayList<Byte> path = new ArrayList<>();
+        MapNode curNode = this;
+        MapNode parentNode = curNode.getParent();
+        while(parentNode != null)
+        {
+            path.add(curNode.getIndex());
+            curNode = parentNode;
+            parentNode = curNode.getParent();
+        }
+        return path;
     }
 
     protected boolean hasCachedConclusion()

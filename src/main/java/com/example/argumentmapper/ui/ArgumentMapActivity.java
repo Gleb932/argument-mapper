@@ -1,4 +1,4 @@
-package com.example.argumentmapper;
+package com.example.argumentmapper.ui;
 
 import android.animation.ArgbEvaluator;
 import android.content.Intent;
@@ -19,8 +19,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.argumentmapper.ArgumentMap;
+import com.example.argumentmapper.ArgumentMapperApplication;
+import com.example.argumentmapper.FileManager;
+import com.example.argumentmapper.InductiveNode;
+import com.example.argumentmapper.MapNode;
+import com.example.argumentmapper.R;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import dev.bandb.graphview.AbstractGraphAdapter;
 import dev.bandb.graphview.graph.Graph;
@@ -31,6 +40,8 @@ import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration;
 
 public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDialogListener {
 
+    @Inject
+    FileManager fileManager;
     private RecyclerView argumentMapView;
     private GraphAdapter graphAdapter;
     private LayoutInflater inflater;
@@ -47,6 +58,8 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        ((ArgumentMapperApplication)getApplication()).getApplicationComponent().inject(this);
 
         map = getIntent().getParcelableExtra("map");
         inflater = LayoutInflater.from(this);
@@ -157,6 +170,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
             InductiveNode node = (InductiveNode)ArgumentMapActivity.this.graphAdapter.getNode(getAbsoluteAdapterPosition()).getData();
             editingNode = node;
             showAddNodeDialog(node);
+            ArrayList<Byte> path = node.getPath();
         }
 
         @Override
@@ -210,14 +224,14 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         Intent data = new Intent();
         data.putExtra("map", map);
         setResult(RESULT_OK, data);
-        FileManager.saveMapToFile(map);
+        fileManager.saveMapToFile(map);
         finish();
     }
 
     @Override
     protected void onStop()
     {
-        FileManager.saveMapToFile(map);
+        fileManager.saveMapToFile(map);
         super.onStop();
     }
 }

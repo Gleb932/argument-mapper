@@ -8,6 +8,8 @@
     <string name="dialog_add_node_first_label">Name:</string>
     <string name="dialog_add_node_second_label">Weight:</string>
     <string name="dialog_add_node_third_label">Description:</string>
+    <string name="dialog_share_map_label">Map code</string>
+    <string name="dialog_share_map_button">Copy</string>
     <string name="title_activity_map">Argument map</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>

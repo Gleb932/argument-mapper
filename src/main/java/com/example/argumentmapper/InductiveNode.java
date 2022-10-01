@@ -5,7 +5,7 @@ import android.os.Parcelable;
 
 import java.util.ArrayList;
 
-class InductiveNode extends MapNode implements Parcelable {
+public class InductiveNode extends MapNode implements Parcelable {
 
     protected String description;
     protected String name;
@@ -22,7 +22,7 @@ class InductiveNode extends MapNode implements Parcelable {
         this.description = description;
         this.name = name;
     }
-    InductiveNode(String description, String name, int weight)
+    public InductiveNode(String description, String name, int weight)
     {
         this.description = description;
         this.name = name;

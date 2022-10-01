@@ -1,4 +1,4 @@
-package com.example.argumentmapper;
+package com.example.argumentmapper.ui;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -8,6 +8,9 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.argumentmapper.APIService;
+import com.example.argumentmapper.ArgumentMapperApplication;
+import com.example.argumentmapper.R;
 import com.example.argumentmapper.exceptions.AuthException;
 import com.example.argumentmapper.exceptions.ConnectionException;
 
@@ -23,7 +26,8 @@ import okhttp3.ResponseBody;
 
 public class RegistrationActivity extends AppCompatActivity {
 
-    @Inject APIService apiService;
+    @Inject
+    APIService apiService;
     private EditText etEmail, etLogin, etPassword;
     private static final String TAG = LoginActivity.class.getName();
 

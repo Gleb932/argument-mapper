@@ -3,54 +3,65 @@ package com.example.argumentmapper;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.UUID;
 
 public class ArgumentMap implements Parcelable {
-    private final static String extension = "nd";
+    final static String extension = "nd";
     private InductiveNode root;
-    private String filename;
+    transient private String filename;
+    private Integer sessionID;
 
-    ArgumentMap(String description)
+    public ArgumentMap(String description)
     {
         this(description, "");
     }
-    ArgumentMap(String description, String topic)
+    public ArgumentMap(String description, String topic)
     {
         this(new InductiveNode(description, topic, 0));
     }
-    ArgumentMap(InductiveNode root)
+    public ArgumentMap(InductiveNode root)
     {
         this(root, UUID.randomUUID().toString() + "." + extension);
     }
-    ArgumentMap(InductiveNode root, String filename)
+    public ArgumentMap(InductiveNode root, String filename)
     {
         this.root = root;
         this.filename = filename;
     }
 
-    protected ArgumentMap(Parcel in) {
+    public ArgumentMap(Parcel in) {
         filename = in.readString();
+        sessionID = (Integer)in.readValue(Integer.class.getClassLoader());
         root = in.readParcelable(InductiveNode.class.getClassLoader());
     }
 
-    String getTopic()
+    public String getTopic()
     {
         return root.getName();
     }
-    int getConclusion()
+    public int getConclusion()
     {
         return root.getConclusion();
     }
-    InductiveNode getRoot()
+    public InductiveNode getRoot()
     {
         return root;
     }
-    void setRoot(InductiveNode root){this.root = root;}
-    String getFilename()
+    public void setRoot(InductiveNode root){this.root = root;}
+    public Integer getSessionID() {return this.sessionID;}
+    public void setSessionID(int sessionID) {this.sessionID = sessionID;}
+    public void removeSessionID(){this.sessionID = null;}
+    public String getFilename()
     {
         return filename;
     }
-    static String getExtension(){return extension;}
+    public void setFilename(String filename)
+    {
+        this.filename = filename;
+    }
+    public static String getExtension(){return extension;}
 
     @Override
     public int describeContents() {
@@ -60,6 +71,7 @@ public class ArgumentMap implements Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(filename);
+        parcel.writeValue(sessionID);
         parcel.writeParcelable(root, 0);
     }
 

@@ -5,4 +5,5 @@
     <color name="colorAccent">#c8b33c</color>
     <color name="colorAccentVibrant">#FFA17A</color>
     <color name="colorNeutral">#565656</color>
+    <color name="colorDarkerBackground">#121212</color>
 </resources>

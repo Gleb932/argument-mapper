@@ -1,4 +1,4 @@
-package com.example.argumentmapper;
+package com.example.argumentmapper.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,6 +12,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDialogFragment;
+
+import com.example.argumentmapper.ArgumentMap;
+import com.example.argumentmapper.R;
 
 public class AddArgumentMapDialog extends AppCompatDialogFragment {
 
