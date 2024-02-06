@@ -2,10 +2,12 @@ package com.example.argumentmapper.ui;
 
 import android.animation.ArgbEvaluator;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -13,19 +15,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.argumentmapper.APIService;
 import com.example.argumentmapper.ArgumentMap;
+import com.example.argumentmapper.ArgumentMapEditor;
 import com.example.argumentmapper.ArgumentMapperApplication;
 import com.example.argumentmapper.FileManager;
 import com.example.argumentmapper.InductiveNode;
 import com.example.argumentmapper.MapNode;
+import com.example.argumentmapper.OfflineArgumentMapEditor;
+import com.example.argumentmapper.OnlineArgumentMapEditor;
 import com.example.argumentmapper.R;
+import com.example.argumentmapper.TokenExpirationHandler;
+import com.example.argumentmapper.exceptions.AuthException;
+import com.example.argumentmapper.exceptions.ConnectionException;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,18 +50,32 @@ import dev.bandb.graphview.graph.Node;
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerConfiguration;
 import dev.bandb.graphview.layouts.tree.BuchheimWalkerLayoutManager;
 import dev.bandb.graphview.layouts.tree.TreeEdgeDecoration;
+import okhttp3.OkHttpClient;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
 
-public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDialogListener {
-
+public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDialogListener, TokenExpirationHandler {
+    @Inject
+    APIService apiService;
+    @Inject
+    Gson gson;
+    @Inject
+    SharedPreferences sharedPreferences;
     @Inject
     FileManager fileManager;
+    @Inject
+    OkHttpClient okHttpClient;
+    private static final String TAG = MainActivity.class.getName();
     private RecyclerView argumentMapView;
     private GraphAdapter graphAdapter;
     private LayoutInflater inflater;
     private ArgumentMap map;
-    private MapNode editingNode;
+    private boolean editingNode = false;
+    private boolean failed = false;
     private dev.bandb.graphview.graph.Node contextVisual;
     private Graph graph;
+    private ArgumentMapEditor mapEditor;
     private final static int baseColor = Color.parseColor("#565656");
     private final static int positiveColor = Color.parseColor("#008577");
     private final static int negativeColor = Color.parseColor("#FFA17A");
@@ -58,12 +85,74 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        inflater = LayoutInflater.from(this);
 
         ((ArgumentMapperApplication)getApplication()).getApplicationComponent().inject(this);
 
         map = getIntent().getParcelableExtra("map");
-        inflater = LayoutInflater.from(this);
+        Integer sessionID = map.getSessionID();
+        if(sessionID != null) {
+            mapEditor = new OnlineArgumentMapEditor(this, sharedPreferences, okHttpClient, sessionID);
+            apiService.getSessionMap(sessionID).enqueue(new retrofit2.Callback<ResponseBody>()
+            {
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    if(t instanceof AuthException)
+                    {
+                        Toast.makeText(ArgumentMapActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                        fixToken();
+                    }
+                    else if(t instanceof ConnectionException)
+                    {
+                        Toast.makeText(ArgumentMapActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    if(response.isSuccessful())
+                    {
+                        try {
+                            String sessionMap = JsonParser.parseString(response.body().string()).getAsJsonObject().get("sessionMap").getAsString();
+                            ArgumentMapActivity.this.map.setRoot(gson.fromJson(sessionMap, InductiveNode.class));
+                            fillArgumentMap();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }else {
+                        if(response.code() == 404)
+                        {
+                            Toast.makeText(ArgumentMapActivity.this, "This session is no longer available", Toast.LENGTH_LONG).show();
+                            map.removeSessionID();
+                            fileManager.saveMapToFile(map);
+                            setResult(RESULT_FIRST_USER);
+                            finish();
+                        }
+                        try {
+                            Log.v(TAG, response.errorBody().string());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+        }else{
+            mapEditor = new OfflineArgumentMapEditor();
+            fillArgumentMap();
+        }
+    }
 
+    @Override
+    public void fixToken() {
+        if(failed) return;
+        failed = true;
+        ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
+        app.redirectToLogin();
+        finish();
+    }
+
+    private void fillArgumentMap()
+    {
+        findViewById(R.id.progressBar).setVisibility(View.GONE);
         argumentMapView = findViewById(R.id.treeRecycler);
         graphAdapter = new GraphAdapter();
         BuchheimWalkerConfiguration config = new BuchheimWalkerConfiguration.Builder()
@@ -167,10 +256,12 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
         @Override
         public void onClick(View view) {
-            InductiveNode node = (InductiveNode)ArgumentMapActivity.this.graphAdapter.getNode(getAbsoluteAdapterPosition()).getData();
-            editingNode = node;
-            showAddNodeDialog(node);
-            ArrayList<Byte> path = node.getPath();
+            contextVisual = ArgumentMapActivity.this.graphAdapter.getNode(getAbsoluteAdapterPosition());
+            InductiveNode node = (InductiveNode) contextVisual.getData();
+            if(node.getParent() != null) {
+                editingNode = true;
+                showAddNodeDialog(node);
+            }
         }
 
         @Override
@@ -190,11 +281,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
     private void removeNode(Node visualNode)
     {
-        if(visualNode.getData() == map.getRoot()) return;
-        MapNode nodeToRemove = ((MapNode)visualNode.getData());
-        MapNode parent = nodeToRemove.getParent();
-        parent.removeChild(nodeToRemove);
-        parent.updateConclusion();
+        if(!mapEditor.removeChild((MapNode)visualNode.getData())) return;
         graph.removeNode(visualNode);
         graphAdapter.notifyDataSetChanged();
     }
@@ -202,20 +289,26 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     private void resetDialogStates()
     {
         contextVisual = null;
-        editingNode = null;
+        editingNode = false;
     }
 
     @Override
     public void onFinishAddNodeDialog(InductiveNode item) {
         if(item != null) {
-            if (editingNode == null) {
-                ((InductiveNode) contextVisual.getData()).addChild(item);
-                graph.addEdge(contextVisual, new Node(item));
+            if (editingNode) {
+                InductiveNode node = (InductiveNode) contextVisual.getData();
+                node.setName(item.getName());
+                node.setDescription(item.getDescription());
+                node.setWeight(item.getWeight());
+                graphAdapter.notifyDataSetChanged();
+            }else{
+                if(mapEditor.addChild((InductiveNode) contextVisual.getData(), item)) {
+                    graph.addEdge(contextVisual, new Node(item));
+                    graphAdapter.notifyDataSetChanged();
+                }
             }
-            item.updateConclusion();
         }
         resetDialogStates();
-        graphAdapter.notifyDataSetChanged();
     }
 
     @Override

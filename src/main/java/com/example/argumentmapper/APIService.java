@@ -25,6 +25,10 @@ public interface APIService {
     );
     @GET("/api/test")
     Call<ResponseBody> authTest();
+    @GET("/api/session/{sessionID}")
+    Call<ResponseBody> getSessionMap(
+            @Path("sessionID") int sessionID
+    );
     @FormUrlEncoded
     @POST("/api/session")
     Call<ResponseBody> createSession(

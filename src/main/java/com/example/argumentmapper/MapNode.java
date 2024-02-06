@@ -3,16 +3,11 @@ package com.example.argumentmapper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapNode {
-    protected ArrayList<MapNode> children;
+public abstract class MapNode {
+    protected ArrayList<MapNode> children = new ArrayList<>();
     protected transient byte index;
     protected transient MapNode parent;
     protected transient Integer cachedConclusion;
-
-    MapNode()
-    {
-        this.children = new ArrayList<MapNode>();
-    }
 
     public void addChild(MapNode child)
     {
@@ -30,6 +25,7 @@ public class MapNode {
             children.get(i).setIndex((byte)(i - 128));
         }
     }
+    public abstract void shallowCopy(MapNode other);
     public MapNode getParent()
     {
         return parent;
@@ -76,12 +72,11 @@ public class MapNode {
         cachedConclusion = conclusion;
     }
 
-    public int getConclusion() { return 0; }
+    public abstract int getConclusion();
 
     public void updateConclusion()
     {
-        this.cachedConclusion = null;
-        MapNode updatedNode = parent;
+        MapNode updatedNode = this;
         int oldConclusion;
         int newConclusion;
         do {

@@ -78,7 +78,6 @@ public class InductiveNode extends MapNode implements Parcelable {
         this.weight = weight;
         updateConclusion();
     }
-
     @Override
     public int getConclusion()
     {
@@ -111,6 +110,13 @@ public class InductiveNode extends MapNode implements Parcelable {
                 return weight;
             }
         }
+    }
+    @Override
+    public void shallowCopy(MapNode other) {
+        InductiveNode node = (InductiveNode) other;
+        setDescription(node.getDescription());
+        setName(node.getFullName());
+        setWeight(node.getWeight());
     }
 
     @Override

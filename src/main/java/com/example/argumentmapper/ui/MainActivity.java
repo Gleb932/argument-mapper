@@ -74,6 +74,21 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+
+            ArgumentMap map = data.getParcelableExtra("map");
+            editingMap.setRoot(map.getRoot());
+            listAdapter.notifyDataSetChanged();
+        }
+        else if(resultCode == RESULT_FIRST_USER) {
+            editingMap.removeSessionID();
+        }
+        editingMap = null;
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_menu, menu);
@@ -118,7 +133,13 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                 {
                     @Override
                     public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        if(t instanceof ConnectionException || t instanceof AuthException)
+                        if(t instanceof AuthException)
+                        {
+                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                            ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
+                            app.redirectToLogin();
+                        }
+                        else if(t instanceof ConnectionException)
                         {
                             Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
                         }
@@ -140,8 +161,10 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                             }
                         }else {
                             try {
-                                Log.v(TAG, response.errorBody().string());
-                            } catch (IOException e) {
+                                String jsonResponse = response.errorBody().string();
+                                String message = JsonParser.parseString(jsonResponse).getAsJsonObject().get("message").getAsString();
+                                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
@@ -158,7 +181,13 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                 {
                     @Override
                     public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        if(t instanceof ConnectionException || t instanceof AuthException)
+                        if(t instanceof AuthException)
+                        {
+                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                            ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
+                            app.redirectToLogin();
+                        }
+                        else if(t instanceof ConnectionException)
                         {
                             Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
                         }
@@ -200,14 +229,6 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         intent.putExtra("map", map);
         editingMap = map;
         this.startActivityForResult(intent, 0);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        ArgumentMap newMap = data.getParcelableExtra("map");
-        editingMap.setRoot(newMap.getRoot());
-        listAdapter.notifyDataSetChanged();
     }
 
     @Override

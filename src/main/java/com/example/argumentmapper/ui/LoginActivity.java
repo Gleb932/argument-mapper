@@ -69,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
                             LoginActivity.this.finish();
                         }else {
                             JSONObject jsonError = new JSONObject(response.errorBody().string());
-                            Log.v(TAG, jsonError.getString("message"));
+                            Toast.makeText(LoginActivity.this, jsonError.getString("message"), Toast.LENGTH_LONG).show();
                         }
                     } catch (IOException | JSONException e) {
                         Toast.makeText(LoginActivity.this, "Something went wrong", Toast.LENGTH_LONG).show();

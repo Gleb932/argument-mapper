@@ -3,6 +3,7 @@ package com.example.argumentmapper.interceptors;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.example.argumentmapper.ui.LoginActivity;
 import com.example.argumentmapper.exceptions.AuthException;
@@ -34,27 +35,19 @@ public class AuthInterceptor implements Interceptor {
         String token = sharedPreferences.getString("access_token", null);
         if(token == null)
         {
-            redirectToLogin();
             throw new AuthException();
         }
         Request newRequest = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer " + token)
+                .addHeader("authorization", "Bearer " + token)
                 .build();
 
         Response response = chain.proceed(newRequest);
         if(response.code() == 401)
         {
-            redirectToLogin();
             throw new AuthException();
         }else
         {
             return response;
         }
-    }
-
-    void redirectToLogin()
-    {
-        Intent intent = new Intent(context, LoginActivity.class);
-        context.startActivity(intent);
     }
 }

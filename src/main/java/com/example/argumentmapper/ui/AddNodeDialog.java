@@ -56,17 +56,8 @@ public class AddNodeDialog extends AppCompatDialogFragment {
                     Toast.makeText(getActivity(), (etDescription.getText().toString().isEmpty()?"Empty description":"Empty weight"), Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if(editingNode!=null)
-                {
-                    editingNode.setDescription(etDescription.getText().toString());
-                    editingNode.setName(etName.getText().toString());
-                    int weight = Integer.parseInt(etWeight.getText().toString());
-                    editingNode.setWeight(weight);
-                    listener.onFinishAddNodeDialog(editingNode);
-                }else {
-                    InductiveNode newItem = new InductiveNode(etDescription.getText().toString(), etName.getText().toString(), Integer.parseInt(etWeight.getText().toString()));
-                    listener.onFinishAddNodeDialog(newItem);
-                }
+                InductiveNode newItem = new InductiveNode(etDescription.getText().toString(), etName.getText().toString(), Integer.parseInt(etWeight.getText().toString()));
+                listener.onFinishAddNodeDialog(newItem);
             }
         })
         .setNegativeButton("Close", new DialogInterface.OnClickListener() {
