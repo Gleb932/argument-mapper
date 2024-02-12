@@ -92,7 +92,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         map = getIntent().getParcelableExtra("map");
         Integer sessionID = map.getSessionID();
         if(sessionID != null) {
-            mapEditor = new OnlineArgumentMapEditor(this, sharedPreferences, okHttpClient, sessionID);
+            mapEditor = new OnlineArgumentMapEditor(gson, this, sharedPreferences, okHttpClient, sessionID);
             apiService.getSessionMap(sessionID).enqueue(new retrofit2.Callback<ResponseBody>()
             {
                 @Override
@@ -261,6 +261,8 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
             if(node.getParent() != null) {
                 editingNode = true;
                 showAddNodeDialog(node);
+            }else{
+                contextVisual = null;
             }
         }
 
@@ -281,7 +283,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
     private void removeNode(Node visualNode)
     {
-        if(!mapEditor.removeChild((MapNode)visualNode.getData())) return;
+        if(!mapEditor.removeNode((MapNode)visualNode.getData())) return;
         graph.removeNode(visualNode);
         graphAdapter.notifyDataSetChanged();
     }
@@ -297,9 +299,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         if(item != null) {
             if (editingNode) {
                 InductiveNode node = (InductiveNode) contextVisual.getData();
-                node.setName(item.getName());
-                node.setDescription(item.getDescription());
-                node.setWeight(item.getWeight());
+                mapEditor.replaceNode(node, item);
                 graphAdapter.notifyDataSetChanged();
             }else{
                 if(mapEditor.addChild((InductiveNode) contextVisual.getData(), item)) {

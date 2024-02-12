@@ -9,18 +9,18 @@ public class OfflineArgumentMapEditor implements ArgumentMapEditor {
     }
 
     @Override
-    public boolean removeChild(MapNode child) {
-        MapNode parent = child.getParent();
+    public boolean removeNode(MapNode node) {
+        MapNode parent = node.getParent();
         if(parent == null) return false;
-        parent.removeChild(child);
+        parent.removeChild(node);
         parent.updateConclusion();
         return true;
     }
 
     @Override
-    public boolean replaceChild(MapNode oldChild, MapNode newChild) {
-        if(oldChild.getParent() == null) return false;
-        oldChild.shallowCopy(newChild);
+    public boolean replaceNode(MapNode oldNode, MapNode newNode) {
+        if(oldNode.getParent() == null) return false;
+        oldNode.shallowCopy(newNode);
         return true;
     }
 }

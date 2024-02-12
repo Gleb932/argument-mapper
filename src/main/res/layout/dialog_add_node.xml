@@ -35,11 +35,12 @@
                 />
 
             <EditText
-                android:id="@+id/etName"
+                android:id="@+id/etDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
-                />
+                android:inputType="textMultiLine"
+                android:maxLines="5" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -59,12 +60,11 @@
                 />
 
             <EditText
-                android:id="@+id/etDescription"
+                android:id="@+id/etName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine"
-                android:maxLines="5"
-                />
+                android:inputType="text" />
+
             <TextView
                 android:id="@+id/tvConclusion"
                 android:layout_width="match_parent"

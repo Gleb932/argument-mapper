@@ -10,6 +10,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -45,6 +46,6 @@ dependencies {
     implementation group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.9.0'
     implementation group: 'com.squareup.retrofit2', name: 'converter-gson', version: '2.9.0'
     implementation 'com.google.dagger:dagger-android:2.42'
+    implementation 'org.apache.commons:commons-lang3:3.10'
     annotationProcessor 'com.google.dagger:dagger-compiler:2.42'
-
 }

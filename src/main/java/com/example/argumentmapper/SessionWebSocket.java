@@ -5,6 +5,8 @@ import android.util.Log;
 import com.example.argumentmapper.exceptions.AuthException;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -36,18 +38,42 @@ public class SessionWebSocket extends WebSocketListener {
         //client.dispatcher().executorService().shutdown();
     }
 
-    @Override public void onOpen(WebSocket webSocket, @NotNull Response response) {
-        webSocket.send("Hello...");
-        webSocket.send("...World!");
-        webSocket.close(1000, "Goodbye, World!");
+    boolean sendMessage(String message)
+    {
+        return webSocket.send(message);
     }
 
-    @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
-        Log.v(TAG, "MESSAGE: " + text);
+    boolean close()
+    {
+        return webSocket.close(1000, null);
+    }
+
+    @Override public void onOpen(WebSocket webSocket, @NotNull Response response) {
+        Log.v(TAG, "WebSocket open");
+    }
+
+    @Override public void onMessage(@NotNull WebSocket webSocket, @NotNull String message) {
+        Log.v(TAG, "MESSAGE: " + message);
+        try {
+            JSONObject jsonResponse = new JSONObject(message);
+            if(jsonResponse.has("result"))
+            {
+                int code = jsonResponse.getInt("result");
+                if(code == 200) {
+                    listener.onOperationSuccess();
+                }else{
+                    listener.onOperationFailure(code);
+                }
+            }else if(jsonResponse.has("operation"))
+            {
+                listener.onCommand(message);
+            }
+        }catch (JSONException err){
+            Log.v(TAG, err.toString());
+        }
     }
 
     @Override public void onMessage(@NotNull WebSocket webSocket, ByteString bytes) {
-        Log.v(TAG, "MESSAGE: " + bytes.hex());
     }
 
     @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {

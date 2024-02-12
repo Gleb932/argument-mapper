@@ -1,7 +1,8 @@
 package com.example.argumentmapper;
 
 public interface WebSocketListener {
-    void onMessageSuccess();
-    void onMessageDenial();
+    void onOperationSuccess();
+    void onOperationFailure(int code);
+    void onCommand(String jsonCommand);
     void onAuthError();
 }

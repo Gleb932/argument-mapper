@@ -3,17 +3,24 @@ package com.example.argumentmapper;
 import android.content.SharedPreferences;
 
 import com.example.argumentmapper.exceptions.AuthException;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import org.apache.commons.lang3.StringUtils;
 
 import okhttp3.OkHttpClient;
 
-public class OnlineArgumentMapEditor extends OfflineArgumentMapEditor implements WebSocketListener {
+public class OnlineArgumentMapEditor implements ArgumentMapEditor, WebSocketListener {
+    private OfflineArgumentMapEditor offlineEditor;
+    private Gson gson;
     private TokenExpirationHandler handler;
     private SharedPreferences sharedPreferences;
     private OkHttpClient client;
     private int sessionID;
     private SessionWebSocket sessionWebSocket;
 
-    public OnlineArgumentMapEditor(TokenExpirationHandler handler, SharedPreferences sharedPreferences, OkHttpClient okHttpClient, int sessionID) {
+    public OnlineArgumentMapEditor(Gson gson, TokenExpirationHandler handler, SharedPreferences sharedPreferences, OkHttpClient okHttpClient, int sessionID) {
+        this.gson = gson;
         this.handler = handler;
         this.sharedPreferences = sharedPreferences;
         this.client = okHttpClient;
@@ -31,31 +38,37 @@ public class OnlineArgumentMapEditor extends OfflineArgumentMapEditor implements
         sessionWebSocket = new SessionWebSocket(this, token, client, sessionID);
     }
 
-    @Override
     public boolean addChild(MapNode parent, MapNode child) {
+        String parentPath = StringUtils.join(parent.getPath(),";");
+        JsonObject childJson = gson.toJsonTree(child).getAsJsonObject();
+        JsonObject jsonRequest = new JsonObject();
+        jsonRequest.addProperty("operation", "addChild");
+        jsonRequest.addProperty("parentPath", parentPath);
+        jsonRequest.add("child", childJson);
+        sessionWebSocket.sendMessage(jsonRequest.toString());
+        return false;
+    }
 
-        return super.addChild(parent, child);
+    public boolean removeNode(MapNode node) {
+        return offlineEditor.removeNode(node);
+    }
+
+    public boolean replaceNode(MapNode oldNode, MapNode newNode) {
+        return offlineEditor.replaceNode(oldNode, newNode);
     }
 
     @Override
-    public boolean removeChild(MapNode child) {
-
-        return super.removeChild(child);
-    }
-
-    @Override
-    public boolean replaceChild(MapNode oldChild, MapNode newChild) {
-
-        return super.replaceChild(oldChild, newChild);
-    }
-
-    @Override
-    public void onMessageSuccess() {
+    public void onOperationSuccess() {
 
     }
 
     @Override
-    public void onMessageDenial() {
+    public void onOperationFailure(int code) {
+
+    }
+
+    @Override
+    public void onCommand(String jsonCommand) {
 
     }
 
