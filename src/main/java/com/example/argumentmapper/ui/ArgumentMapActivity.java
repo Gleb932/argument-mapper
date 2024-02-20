@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,13 +27,20 @@ import com.example.argumentmapper.APIService;
 import com.example.argumentmapper.ArgumentMap;
 import com.example.argumentmapper.ArgumentMapEditor;
 import com.example.argumentmapper.ArgumentMapperApplication;
+import com.example.argumentmapper.AuthHandler;
+import com.example.argumentmapper.Command;
+import com.example.argumentmapper.CommandExecutor;
+import com.example.argumentmapper.CommandToJsonHandler;
+import com.example.argumentmapper.DeductiveNode;
+import com.example.argumentmapper.EditorListener;
 import com.example.argumentmapper.FileManager;
 import com.example.argumentmapper.InductiveNode;
+import com.example.argumentmapper.JsonToCommandHandler;
 import com.example.argumentmapper.MapNode;
 import com.example.argumentmapper.OfflineArgumentMapEditor;
 import com.example.argumentmapper.OnlineArgumentMapEditor;
 import com.example.argumentmapper.R;
-import com.example.argumentmapper.TokenExpirationHandler;
+import com.example.argumentmapper.SessionWebSocket;
 import com.example.argumentmapper.exceptions.AuthException;
 import com.example.argumentmapper.exceptions.ConnectionException;
 import com.google.gson.Gson;
@@ -40,6 +48,7 @@ import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -55,7 +64,7 @@ import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDialogListener, TokenExpirationHandler {
+public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDialogListener, CommandExecutor, AuthHandler, EditorListener {
     @Inject
     APIService apiService;
     @Inject
@@ -67,15 +76,19 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     @Inject
     OkHttpClient okHttpClient;
     private static final String TAG = MainActivity.class.getName();
+    private ProgressBar progressBar;
     private RecyclerView argumentMapView;
     private GraphAdapter graphAdapter;
     private LayoutInflater inflater;
     private ArgumentMap map;
-    private boolean editingNode = false;
     private boolean failed = false;
     private dev.bandb.graphview.graph.Node contextVisual;
     private Graph graph;
-    private ArgumentMapEditor mapEditor;
+    private OfflineArgumentMapEditor offlineArgumentMapEditor;
+    private ArgumentMapEditor argumentMapEditor;
+    private SessionWebSocket sessionWebSocket;
+    private Command currentCommand;
+    private JsonToCommandHandler jsonToCommandHandler;
     private final static int baseColor = Color.parseColor("#565656");
     private final static int positiveColor = Color.parseColor("#008577");
     private final static int negativeColor = Color.parseColor("#FFA17A");
@@ -86,13 +99,23 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
         inflater = LayoutInflater.from(this);
+        progressBar = findViewById(R.id.progressBar);
 
         ((ArgumentMapperApplication)getApplication()).getApplicationComponent().inject(this);
 
+        offlineArgumentMapEditor = new OfflineArgumentMapEditor(this);
         map = getIntent().getParcelableExtra("map");
         Integer sessionID = map.getSessionID();
         if(sessionID != null) {
-            mapEditor = new OnlineArgumentMapEditor(gson, this, sharedPreferences, okHttpClient, sessionID);
+            jsonToCommandHandler = new JsonToCommandHandler(map, gson);
+            try {
+                openNewWebSocket();
+                OnlineArgumentMapEditor onlineEditor = new OnlineArgumentMapEditor(this, sessionWebSocket, new CommandToJsonHandler(gson));
+                argumentMapEditor = onlineEditor;
+                sessionWebSocket.setListener(onlineEditor);
+            } catch (AuthException e) {
+                fixToken();
+            }
             apiService.getSessionMap(sessionID).enqueue(new retrofit2.Callback<ResponseBody>()
             {
                 @Override
@@ -136,12 +159,17 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
                 }
             });
         }else{
-            mapEditor = new OfflineArgumentMapEditor();
+            argumentMapEditor = offlineArgumentMapEditor;
             fillArgumentMap();
         }
     }
 
-    @Override
+    void openNewWebSocket() throws AuthException
+    {
+        String token = sharedPreferences.getString("access_token", null);
+        sessionWebSocket = new SessionWebSocket(this, this, token, okHttpClient, map.getSessionID());
+    }
+
     public void fixToken() {
         if(failed) return;
         failed = true;
@@ -152,7 +180,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
     private void fillArgumentMap()
     {
-        findViewById(R.id.progressBar).setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
         argumentMapView = findViewById(R.id.treeRecycler);
         graphAdapter = new GraphAdapter();
         BuchheimWalkerConfiguration config = new BuchheimWalkerConfiguration.Builder()
@@ -211,16 +239,56 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.addChild:
-                showAddNodeDialog(null);
+            case R.id.addInductiveNode:
+                showAddInductiveNodeDialog(null);
+                return true;
+            case R.id.addDeductiveNode:
+                showAddDeductiveNodeDialog(null);
                 return true;
             case R.id.remove:
-                removeNode(contextVisual);
+                removeNode();
                 return true;
             default:
-                resetDialogStates();
                 return super.onContextItemSelected(item);
         }
+    }
+
+    @Override
+    public void execute(String jsonCommand) {
+        try {
+            currentCommand = jsonToCommandHandler.jsonToCommand(jsonCommand);
+            offlineArgumentMapEditor.execute(currentCommand);
+        } catch (JsonToCommandHandler.ConversionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onAuthError() {
+        fixToken();
+    }
+
+    @Override
+    public void onEditingResult(boolean result) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setVisibility(View.INVISIBLE);
+                if(!result) return;
+                switch (currentCommand.type){
+                    case ADD_CHILD:
+                        graph.addEdge(contextVisual, new Node(currentCommand.nodes.get(1)));
+                        break;
+                    case REPLACE_NODE:
+                        break;
+                    case REMOVE_NODE:
+                        graph.removeNode(contextVisual);
+                        break;
+                }
+                graphAdapter.notifyDataSetChanged();
+                currentCommand = null;
+            }
+        });
     }
 
     public class GraphAdapter extends AbstractGraphAdapter<GraphViewHolder> {
@@ -234,9 +302,10 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
         @Override
         public void onBindViewHolder(@NonNull GraphViewHolder holder, int position) {
-            InductiveNode node = (InductiveNode)getNodeData(position);
-            holder.tvName.setText(node.getName());
+            MapNode node = (MapNode) getNodeData(position);
             int conclusion = node.getConclusion();
+            holder.tvName.setText(node.getText());
+            holder.tvWeight.setText(Integer.toString(conclusion));
             int nodeColor = (Integer) new ArgbEvaluator().evaluate(Math.min(Math.abs(conclusion)/(float)brightestColorConclusion,1), baseColor, ((conclusion < 0)?negativeColor:positiveColor));
             holder.layout.setBackgroundColor(nodeColor);
         }
@@ -244,6 +313,7 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
     class GraphViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         public TextView tvName;
+        public TextView tvWeight;
         public LinearLayout layout;
         public GraphViewHolder(View itemView) {
             super(itemView);
@@ -251,18 +321,24 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
             itemView.setOnLongClickListener(this);
             registerForContextMenu(itemView);
             tvName = itemView.findViewById(R.id.tvName);
+            tvWeight = itemView.findViewById(R.id.tvWeight);
             layout = itemView.findViewById(R.id.layout);
         }
 
         @Override
         public void onClick(View view) {
             contextVisual = ArgumentMapActivity.this.graphAdapter.getNode(getAbsoluteAdapterPosition());
-            InductiveNode node = (InductiveNode) contextVisual.getData();
-            if(node.getParent() != null) {
-                editingNode = true;
-                showAddNodeDialog(node);
-            }else{
+            MapNode node = (MapNode) contextVisual.getData();
+            if(node.getParent() == null) {
                 contextVisual = null;
+                return;
+            }
+            if(node instanceof InductiveNode)
+            {
+                showAddInductiveNodeDialog(node);
+            }else if(node instanceof DeductiveNode)
+            {
+                showAddDeductiveNodeDialog(node);
             }
         }
 
@@ -273,42 +349,45 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         }
     }
 
-    private void showAddNodeDialog(InductiveNode node)
+    private void showAddInductiveNodeDialog(MapNode node)
     {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        AddNodeDialog newFragment = new AddNodeDialog();
-        newFragment.setEditingNode(node);
+        AddInductiveNodeDialog newFragment = new AddInductiveNodeDialog();
+        if(node != null) newFragment.setEditingNode((InductiveNode) node);
+        newFragment.setListener(this);
         newFragment.show(fragmentManager, "dialog");
     }
 
-    private void removeNode(Node visualNode)
+    private void showAddDeductiveNodeDialog(MapNode node)
     {
-        if(!mapEditor.removeNode((MapNode)visualNode.getData())) return;
-        graph.removeNode(visualNode);
-        graphAdapter.notifyDataSetChanged();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        AddDeductiveNodeDialog newFragment = new AddDeductiveNodeDialog();
+        if(node != null) newFragment.setEditingNode((DeductiveNode) node);
+        newFragment.setListener(this);
+        newFragment.show(fragmentManager, "dialog");
     }
 
-    private void resetDialogStates()
+    private void removeNode()
     {
-        contextVisual = null;
-        editingNode = false;
+        currentCommand = new Command(Command.CommandType.REMOVE_NODE, Arrays.asList((MapNode) contextVisual.getData()));
+        progressBar.setVisibility(View.VISIBLE);
+        argumentMapEditor.execute(currentCommand);
     }
 
     @Override
-    public void onFinishAddNodeDialog(InductiveNode item) {
-        if(item != null) {
-            if (editingNode) {
-                InductiveNode node = (InductiveNode) contextVisual.getData();
-                mapEditor.replaceNode(node, item);
-                graphAdapter.notifyDataSetChanged();
-            }else{
-                if(mapEditor.addChild((InductiveNode) contextVisual.getData(), item)) {
-                    graph.addEdge(contextVisual, new Node(item));
-                    graphAdapter.notifyDataSetChanged();
-                }
-            }
-        }
-        resetDialogStates();
+    public void onFinishCreatingNode(MapNode item) {
+        if(item == null) return;
+        currentCommand = new Command(Command.CommandType.ADD_CHILD, Arrays.asList((MapNode) contextVisual.getData(), item));
+        progressBar.setVisibility(View.VISIBLE);
+        argumentMapEditor.execute(currentCommand);
+    }
+
+    @Override
+    public void onFinishEditingNode(MapNode item) {
+        if(item == null) return;
+        currentCommand = new Command(Command.CommandType.REPLACE_NODE, Arrays.asList((MapNode) contextVisual.getData(), item));
+        progressBar.setVisibility(View.VISIBLE);
+        argumentMapEditor.execute(currentCommand);
     }
 
     @Override
@@ -319,6 +398,12 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
         setResult(RESULT_OK, data);
         fileManager.saveMapToFile(map);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (sessionWebSocket != null) sessionWebSocket.close();
+        super.onDestroy();
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.argumentmapper.ArgumentMap;
@@ -17,6 +18,7 @@ public class MainListAdapter extends ArrayAdapter<ArgumentMap> {
 
     private static class ArgumentMapViewHolder {
         TextView vTopic;
+        ImageView vOnline;
     }
 
     MainListAdapter(Context context, List<ArgumentMap> items)
@@ -33,11 +35,13 @@ public class MainListAdapter extends ArrayAdapter<ArgumentMap> {
             viewHolder = new ArgumentMapViewHolder();
             convertView = inflater.inflate(R.layout.map_card, parent, false);
             viewHolder.vTopic = (TextView) convertView.findViewById(R.id.topic);
+            viewHolder.vOnline = (ImageView) convertView.findViewById(R.id.imageView);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ArgumentMapViewHolder) convertView.getTag();
         }
         viewHolder.vTopic.setText(map.getTopic());
+        viewHolder.vOnline.setVisibility((map.getSessionID() != null)?View.VISIBLE : View.INVISIBLE);
         return convertView;
     }
 }

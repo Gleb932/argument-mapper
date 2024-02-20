@@ -17,7 +17,7 @@ import androidx.appcompat.app.AppCompatDialogFragment;
 import com.example.argumentmapper.InductiveNode;
 import com.example.argumentmapper.R;
 
-public class AddNodeDialog extends AppCompatDialogFragment {
+public class AddInductiveNodeDialog extends AppCompatDialogFragment {
 
     private EditText etName, etDescription, etWeight;
     private TextView tvConclusion;
@@ -30,16 +30,15 @@ public class AddNodeDialog extends AppCompatDialogFragment {
         Activity activity = getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         LayoutInflater inflater = activity.getLayoutInflater();
-        listener = (AddNodeDialogListener)activity;
 
-        final View view = inflater.inflate(R.layout.dialog_add_node, null);
+        final View view = inflater.inflate(R.layout.dialog_add_inductive_node, null);
         etName = view.findViewById(R.id.etName);
         etDescription = view.findViewById(R.id.etDescription);
         etWeight = view.findViewById(R.id.etWeight);
         tvConclusion = view.findViewById(R.id.tvConclusion);
 
         if(editingNode != null) {
-            etName.setText(editingNode.getFullName());
+            etName.setText(editingNode.getName());
             etDescription.setText(editingNode.getDescription());
             etWeight.setText(Integer.toString(editingNode.getWeight()));
             if (editingNode.getParent() == null) etWeight.setFocusable(false);
@@ -57,21 +56,35 @@ public class AddNodeDialog extends AppCompatDialogFragment {
                     return;
                 }
                 InductiveNode newItem = new InductiveNode(etDescription.getText().toString(), etName.getText().toString(), Integer.parseInt(etWeight.getText().toString()));
-                listener.onFinishAddNodeDialog(newItem);
+                if(editingNode != null)
+                {
+                    listener.onFinishEditingNode(newItem);
+                }else {
+                    listener.onFinishCreatingNode(newItem);
+                }
             }
         })
         .setNegativeButton("Close", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                AddNodeDialog.this.dismiss();
-                listener.onFinishAddNodeDialog(null);
+                AddInductiveNodeDialog.this.dismiss();
+                if(editingNode != null)
+                {
+                    listener.onFinishEditingNode(null);
+                }else {
+                    listener.onFinishCreatingNode(null);
+                }
             }
         });
         return builder.create();
     }
 
-    void setEditingNode(InductiveNode node)
+    public void setEditingNode(InductiveNode node)
     {
         editingNode = node;
+    }
+    public void setListener(AddNodeDialogListener listener)
+    {
+        this.listener = listener;
     }
 
     boolean dataIsValid()

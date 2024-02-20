@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/addChild"
-        android:title="Add child" />
+    <item android:id="@+id/addInductiveNode"
+        android:title="Add inductive node" />
+    <item android:id="@+id/addDeductiveNode"
+        android:title="Add deductive node" />
     <item android:id="@+id/remove"
         android:title="Remove" />
 </menu>

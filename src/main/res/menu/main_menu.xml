@@ -8,5 +8,11 @@
         android:orderInCategory="1"
         android:title="Add"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/connect_button"
+        android:icon="@drawable/ic_cloud_download"
+        android:orderInCategory="1"
+        android:title="Connect"
+        app:showAsAction="always" />
 
 </menu>

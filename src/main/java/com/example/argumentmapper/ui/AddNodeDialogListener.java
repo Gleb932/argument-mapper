@@ -1,7 +1,8 @@
 package com.example.argumentmapper.ui;
 
-import com.example.argumentmapper.InductiveNode;
+import com.example.argumentmapper.MapNode;
 
 public interface AddNodeDialogListener {
-    void onFinishAddNodeDialog(InductiveNode item);
+    void onFinishCreatingNode(MapNode item);
+    void onFinishEditingNode(MapNode item);
 }

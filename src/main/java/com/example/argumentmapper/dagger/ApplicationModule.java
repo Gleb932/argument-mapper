@@ -6,7 +6,9 @@ import android.content.SharedPreferences;
 
 import com.example.argumentmapper.APIService;
 import com.example.argumentmapper.BuildConfig;
+import com.example.argumentmapper.DeductiveNode;
 import com.example.argumentmapper.InductiveNode;
+import com.example.argumentmapper.MapNode;
 import com.example.argumentmapper.interceptors.AuthInterceptor;
 import com.example.argumentmapper.interceptors.ConnectionInterceptor;
 import com.google.gson.Gson;
@@ -74,11 +76,17 @@ public class ApplicationModule {
     static public Gson providesGson()
     {
         GsonBuilder gsonBuilder = new GsonBuilder();
-        JsonDeserializer<InductiveNode> deserializer = new JsonDeserializer<InductiveNode>() {
+        JsonDeserializer<MapNode> mapNodeDeserializer = new JsonDeserializer<MapNode>() {
             @Override
-            public InductiveNode deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            public MapNode deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
                 JsonObject jsonNode = json.getAsJsonObject();
-                InductiveNode node = new InductiveNode(jsonNode.get("description").getAsString(), jsonNode.get("name").getAsString(), jsonNode.get("weight").getAsInt());
+                MapNode node;
+                if(jsonNode.has("operator"))
+                {
+                    node = new DeductiveNode(jsonNode);
+                }else{
+                    node = new InductiveNode(jsonNode);
+                }
                 JsonArray jsonChildren = jsonNode.get("children").getAsJsonArray();
                 for(int i = 0; i < jsonChildren.size(); i++)
                 {
@@ -87,7 +95,9 @@ public class ApplicationModule {
                 return node;
             }
         };
-        gsonBuilder.registerTypeAdapter(InductiveNode.class, deserializer);
+        gsonBuilder.registerTypeAdapter(MapNode.class, mapNodeDeserializer);
+        gsonBuilder.registerTypeAdapter(InductiveNode.class, mapNodeDeserializer);
+        gsonBuilder.registerTypeAdapter(DeductiveNode.class, mapNodeDeserializer);
         return gsonBuilder.create();
     }
 }

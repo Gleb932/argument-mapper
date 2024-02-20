@@ -3,7 +3,7 @@
 
     <dimen name="card_view_margin">15dp</dimen>
     <dimen name="card_view_inner_top_margin">15dp</dimen>
-    <dimen name="card_view_inner_bottom_margin">20dp</dimen>
+    <dimen name="card_view_inner_bottom_margin">15dp</dimen>
     <dimen name="card_view_start_padding">10dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
 

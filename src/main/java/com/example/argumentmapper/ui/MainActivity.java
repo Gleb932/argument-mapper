@@ -154,8 +154,8 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                                 map.setSessionID(sessionID);
                                 fileManager.saveMapToFile(map);
                                 currentCode = String.valueOf(sessionID);
+                                listAdapter.notifyDataSetChanged();
                                 new ShareMapDialogFragment().show(getSupportFragmentManager(), ShareMapDialogFragment.TAG);
-                                Log.v(TAG, responseString);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -194,8 +194,12 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                     }
                     @Override
                     public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        if(!response.isSuccessful())
+                        if(response.isSuccessful())
                         {
+                            map.removeSessionID();
+                            listAdapter.notifyDataSetChanged();
+                            fileManager.saveMapToFile(map);
+                        }else{
                             try {
                                 Log.v(TAG, response.errorBody().string());
                             } catch (IOException e) {
@@ -204,8 +208,6 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                         }
                     }
                 });
-                map.removeSessionID();
-                fileManager.saveMapToFile(map);
                 return true;
             case R.id.showCode:
                 currentCode = String.valueOf(map.getSessionID());

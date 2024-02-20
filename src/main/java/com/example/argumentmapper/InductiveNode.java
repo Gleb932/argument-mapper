@@ -1,16 +1,14 @@
 package com.example.argumentmapper;
 
 import android.os.Parcel;
-import android.os.Parcelable;
 
-import java.util.ArrayList;
+import com.google.gson.JsonObject;
 
-public class InductiveNode extends MapNode implements Parcelable {
+public class InductiveNode extends MapNode {
 
     protected String description;
     protected String name;
     protected int weight;
-    private static final int MAX_CHAR_IN_NAME = 57;
 
     InductiveNode(String description)
     {
@@ -29,41 +27,27 @@ public class InductiveNode extends MapNode implements Parcelable {
         this.weight = weight;
     }
 
-    private InductiveNode(Parcel in)
+    public InductiveNode(Parcel in)
     {
         this.name = in.readString();
         this.description = in.readString();
         this.weight = in.readInt();
-        ArrayList<InductiveNode> childrenList = new ArrayList<InductiveNode>();
-        in.readList(childrenList, InductiveNode.class.getClassLoader());
-        for(InductiveNode child: childrenList)
-        {
-            addChild(child);
-        }
+    }
+
+    public InductiveNode(JsonObject jsonObject)
+    {
+        this.description = jsonObject.get("description").getAsString();
+        this.name = jsonObject.get("name").getAsString();
+        this.weight = jsonObject.get("weight").getAsInt();
     }
 
     public String getDescription() {
         return description;
     }
-    public String getName() {
-        String out;
-        if(!name.isEmpty()) {
-            out =  name;
-        }else {
-            out = description;
-        }
-        if(out.length() <= MAX_CHAR_IN_NAME)
-        {
-            return out;
-        }else
-        {
-            return out.substring(0, MAX_CHAR_IN_NAME) + "...";
-        }
-    }
     public int getWeight() {
         return weight;
     }
-    public String getFullName()
+    public String getName()
     {
         return name;
     }
@@ -75,16 +59,12 @@ public class InductiveNode extends MapNode implements Parcelable {
         this.description = description;
     }
     public void setWeight(int weight) {
-        this.weight = weight;
+        this.weight = Math.min(MAX_WEIGHT, Math.max(-MAX_WEIGHT, weight));
         updateConclusion();
     }
     @Override
-    public int getConclusion()
+    protected int _getConclusion()
     {
-        if(hasCachedConclusion())
-        {
-            return cachedConclusion;
-        }
         int conclusion = 0;
         if(children.size() == 0)
         {
@@ -111,34 +91,29 @@ public class InductiveNode extends MapNode implements Parcelable {
             }
         }
     }
+
     @Override
-    public void shallowCopy(MapNode other) {
+    protected String _getText()
+    {
+        if(!name.isEmpty()) {
+            return name;
+        }else {
+            return description;
+        }
+    }
+
+    @Override
+    protected void _shallowCopy(MapNode other) {
         InductiveNode node = (InductiveNode) other;
         setDescription(node.getDescription());
-        setName(node.getFullName());
+        setName(node.getName());
         setWeight(node.getWeight());
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel parcel, int i) {
+    public void writeToParcelSpecific(Parcel parcel) {
+        parcel.writeInt(0);
         parcel.writeString(name);
         parcel.writeString(description);
         parcel.writeInt(weight);
-        parcel.writeList(children);
     }
-
-    public static final Parcelable.Creator<InductiveNode> CREATOR
-            = new Parcelable.Creator<InductiveNode>() {
-        public InductiveNode createFromParcel(Parcel in) {
-            return new InductiveNode(in);
-        }
-        public InductiveNode[] newArray(int size) {
-            return new InductiveNode[size];
-        }
-    };
 }

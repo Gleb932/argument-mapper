@@ -3,8 +3,7 @@ package com.example.argumentmapper;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.google.gson.annotations.Expose;
-
+import java.util.List;
 import java.util.UUID;
 
 public class ArgumentMap implements Parcelable {
@@ -34,7 +33,7 @@ public class ArgumentMap implements Parcelable {
     public ArgumentMap(Parcel in) {
         filename = in.readString();
         sessionID = (Integer)in.readValue(Integer.class.getClassLoader());
-        root = in.readParcelable(InductiveNode.class.getClassLoader());
+        root = in.readParcelable(MapNode.class.getClassLoader());
     }
 
     public String getTopic()
@@ -50,6 +49,17 @@ public class ArgumentMap implements Parcelable {
         return root;
     }
     public void setRoot(InductiveNode root){this.root = root;}
+    public MapNode getNode(List<Short> path)
+    {
+        MapNode curNode = this.root;
+        for(short childIndex : path)
+        {
+            List<MapNode> children = curNode.getChildren();
+            if(children.size() <= childIndex) return null;
+            curNode = children.get(childIndex);
+        }
+        return curNode;
+    }
     public Integer getSessionID() {return this.sessionID;}
     public void setSessionID(int sessionID) {this.sessionID = sessionID;}
     public void removeSessionID(){this.sessionID = null;}

@@ -1,11 +1,8 @@
 package com.example.argumentmapper.interceptors;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.util.Log;
 
-import com.example.argumentmapper.ui.LoginActivity;
 import com.example.argumentmapper.exceptions.AuthException;
 
 import org.jetbrains.annotations.NotNull;

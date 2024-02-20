@@ -19,12 +19,15 @@ public class SessionWebSocket extends WebSocketListener {
     private static final String TAG = SessionWebSocket.class.getName();
     private static final String sessionsRoute = "session";
     private static final String webSocketURL = BuildConfig.API_URL.replaceFirst("^http", "ws");
-    private final com.example.argumentmapper.WebSocketListener listener;
+    private final CommandExecutor executor;
+    private final AuthHandler handler;
+    private com.example.argumentmapper.WebSocketListener listener;
     private WebSocket webSocket;
 
-    public SessionWebSocket(com.example.argumentmapper.WebSocketListener listener, String token, OkHttpClient client, int sessionID) throws AuthException
+    public SessionWebSocket(AuthHandler handler, CommandExecutor executor, String token, OkHttpClient client, int sessionID) throws AuthException
     {
-        this.listener = listener;
+        this.handler = handler;
+        this.executor = executor;
         if(token == null)
         {
             throw new AuthException();
@@ -38,12 +41,17 @@ public class SessionWebSocket extends WebSocketListener {
         //client.dispatcher().executorService().shutdown();
     }
 
-    boolean sendMessage(String message)
+    public void setListener(com.example.argumentmapper.WebSocketListener listener)
+    {
+        this.listener = listener;
+    }
+
+    public boolean sendMessage(String message)
     {
         return webSocket.send(message);
     }
 
-    boolean close()
+    public boolean close()
     {
         return webSocket.close(1000, null);
     }
@@ -66,7 +74,7 @@ public class SessionWebSocket extends WebSocketListener {
                 }
             }else if(jsonResponse.has("operation"))
             {
-                listener.onCommand(message);
+                executor.execute(message);
             }
         }catch (JSONException err){
             Log.v(TAG, err.toString());
@@ -79,7 +87,7 @@ public class SessionWebSocket extends WebSocketListener {
     @Override public void onClosing(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
         if(code == 1008)
         {
-            listener.onAuthError();
+            handler.onAuthError();
         }
         webSocket.close(1000, null);
         Log.v(TAG, "CLOSE: " + code + " " + reason);
