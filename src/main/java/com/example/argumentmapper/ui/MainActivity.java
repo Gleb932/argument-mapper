@@ -37,7 +37,7 @@ import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements AddArgumentMapDialogListener, ShareMapDialogProvider {
+public class MainActivity extends AppCompatActivity implements AddArgumentMapDialogListener, ShareMapDialogProvider, ConnectMapDialogListener {
 
     @Inject
     APIService apiService;
@@ -100,6 +100,10 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         int id = item.getItemId();
         if (id == R.id.add_button) {
             showAddArgumentMapDialog();
+            return true;
+        }else if(id == R.id.connect_button)
+        {
+            showConnectArgumentMapDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -225,12 +229,64 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         newFragment.show(fragmentManager, "dialog");
     }
 
+    private void showConnectArgumentMapDialog()
+    {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        ConnectMapDialog newFragment = new ConnectMapDialog();
+        newFragment.show(fragmentManager, "dialog");
+    }
+
     private void openArgumentMap(ArgumentMap map)
     {
         Intent intent = new Intent(this, ArgumentMapActivity.class);
         intent.putExtra("map", map);
         editingMap = map;
         this.startActivityForResult(intent, 0);
+    }
+
+    @Override
+    public void onFinishConnectMapDialogListener(int code) {
+        apiService.getSessionMap(code).enqueue(new retrofit2.Callback<ResponseBody>()
+        {
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                if(t instanceof AuthException)
+                {
+                    Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                    ((ArgumentMapperApplication)getApplication()).redirectToLogin();
+                }
+                else if(t instanceof ConnectionException)
+                {
+                    Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if(response.isSuccessful())
+                {
+                    try {
+                        String sessionMap = JsonParser.parseString(response.body().string()).getAsJsonObject().get("sessionMap").getAsString();
+                        ArgumentMap map = new ArgumentMap(gson.fromJson(sessionMap, InductiveNode.class));
+                        map.setSessionID(code);
+                        items.add(map);
+                        listAdapter.notifyDataSetChanged();
+                        fileManager.saveMapToFile(map);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }else {
+                    if(response.code() == 404)
+                    {
+                        Toast.makeText(MainActivity.this, "Cannot find the specified session", Toast.LENGTH_LONG).show();
+                    }
+                    try {
+                        Log.v(TAG, response.errorBody().string());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
 
     @Override

@@ -11,6 +11,7 @@
     <string name="dialog_add_deductive_node_title">Deductive node menu</string>
     <string name="dialog_add_deductive_node_first_label">Pick node type:</string>
     <string name="dialog_share_map_label">Map code</string>
+    <string name="dialog_connect_map_label">Enter map code</string>
     <string name="dialog_share_map_button">Copy</string>
     <string name="title_activity_map">Argument map</string>
     <string-array name="node_types">

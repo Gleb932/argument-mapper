@@ -277,12 +277,12 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
                 if(!result) return;
                 switch (currentCommand.type){
                     case ADD_CHILD:
-                        graph.addEdge(contextVisual, new Node(currentCommand.nodes.get(1)));
+                        graph.addEdge(graph.getNodeAtPosition(currentCommand.nodes.get(0)), new Node(currentCommand.nodes.get(1)));
                         break;
                     case REPLACE_NODE:
                         break;
                     case REMOVE_NODE:
-                        graph.removeNode(contextVisual);
+                        graph.removeNode(graph.getNodeAtPosition(currentCommand.nodes.get(0)));
                         break;
                 }
                 graphAdapter.notifyDataSetChanged();
