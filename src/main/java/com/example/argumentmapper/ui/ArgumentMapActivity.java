@@ -44,6 +44,8 @@ import com.example.argumentmapper.SessionWebSocket;
 import com.example.argumentmapper.exceptions.AuthException;
 import com.example.argumentmapper.exceptions.ConnectionException;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
@@ -135,10 +137,13 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
                     if(response.isSuccessful())
                     {
                         try {
-                            String sessionMap = JsonParser.parseString(response.body().string()).getAsJsonObject().get("sessionMap").getAsString();
-                            ArgumentMapActivity.this.map.setRoot(gson.fromJson(sessionMap, InductiveNode.class));
+                            JsonElement element = JsonParser.parseString(response.body().string());
+                            JsonObject jsonResponse = element.getAsJsonObject();
+                            InductiveNode inductiveNode = gson.fromJson(jsonResponse.get("map_tree").getAsString(), InductiveNode.class);
+                            ArgumentMapActivity.this.map.setRoot(inductiveNode);
+                            ArgumentMapActivity.this.map.setOwnerID(jsonResponse.get("owner_id").getAsInt());
                             fillArgumentMap();
-                        } catch (IOException e) {
+                        } catch (IOException | ClassCastException e) {
                             e.printStackTrace();
                         }
                     }else {
@@ -238,19 +243,23 @@ public class ArgumentMapActivity extends AppCompatActivity implements AddNodeDia
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.addInductiveNode:
-                showAddInductiveNodeDialog(null);
-                return true;
-            case R.id.addDeductiveNode:
-                showAddDeductiveNodeDialog(null);
-                return true;
-            case R.id.remove:
-                removeNode();
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        int itemID = item.getItemId();
+        if(itemID == R.id.addInductiveNode)
+        {
+            showAddInductiveNodeDialog(null);
+            return true;
         }
+        else if(itemID == R.id.addDeductiveNode)
+        {
+            showAddDeductiveNodeDialog(null);
+            return true;
+        }
+        else if(itemID == R.id.remove)
+        {
+            removeNode();
+            return true;
+        }
+        return super.onContextItemSelected(item);
     }
 
     @Override

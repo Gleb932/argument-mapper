@@ -1,6 +1,8 @@
 package com.example.argumentmapper.ui;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -25,6 +27,7 @@ import com.example.argumentmapper.R;
 import com.example.argumentmapper.exceptions.AuthException;
 import com.example.argumentmapper.exceptions.ConnectionException;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
     private ArgumentMap editingMap;
     private static final String TAG = MainActivity.class.getName();
     private String currentCode;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         setContentView(R.layout.activity_main);
         ((ArgumentMapperApplication)getApplication()).getApplicationComponent().inject(this);
         mainList = findViewById(R.id.mainList);
+        sharedPreferences = getSharedPreferences("default", Context.MODE_PRIVATE);;
         registerForContextMenu(mainList);
 
         listAdapter = new MainListAdapter(this, items);
@@ -77,14 +82,14 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-
             ArgumentMap map = data.getParcelableExtra("map");
             editingMap.setRoot(map.getRoot());
-            listAdapter.notifyDataSetChanged();
         }
         else if(resultCode == RESULT_FIRST_USER) {
             editingMap.removeSessionID();
         }
+        listAdapter.notifyDataSetChanged();
+        fileManager.saveMapToFile(editingMap);
         editingMap = null;
     }
 
@@ -114,12 +119,23 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.setHeaderTitle("Choose action");
         ArgumentMap map = listAdapter.getItem(((AdapterView.AdapterContextMenuInfo)menuInfo).position);
-        if(map.getSessionID() == null)
-        {
-            getMenuInflater().inflate(R.menu.map_context_menu, menu);
-        }else
+        if(map.getSessionID() != null)
         {
             getMenuInflater().inflate(R.menu.map_shared_context_menu, menu);
+            Integer ownerID = map.getOwnerID();
+            String userIDStr = sharedPreferences.getString("user_ID", null);
+            if(userIDStr == null) return;
+            int userID;
+            try{
+                userID = Integer.parseInt(userIDStr);
+            }catch (NumberFormatException e){ return; }
+            if(ownerID != null && ownerID.equals(userID))
+            {
+                menu.findItem(R.id.stopSharing).setVisible(true);
+            }
+        }else
+        {
+            getMenuInflater().inflate(R.menu.map_context_menu, menu);
         }
     }
 
@@ -128,98 +144,107 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         int pos = info.position;
         ArgumentMap map = listAdapter.getItem(pos);
-        switch (item.getItemId()) {
-            case R.id.delete:
-                removeArgumentMap(pos);
-                return true;
-            case R.id.share:
-                apiService.createSession(gson.toJson(map.getRoot(), InductiveNode.class)).enqueue(new retrofit2.Callback<ResponseBody>()
-                {
-                    @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        if(t instanceof AuthException)
-                        {
-                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-                            ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
-                            app.redirectToLogin();
-                        }
-                        else if(t instanceof ConnectionException)
-                        {
-                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-                        }
+        int itemID = item.getItemId();
+        if(itemID == R.id.delete) {
+            removeArgumentMap(pos);
+            return true;
+        }else if(itemID == R.id.share) {
+            String userIDStr = sharedPreferences.getString("user_ID", null);
+            apiService.createSession(gson.toJson(map.getRoot(), InductiveNode.class)).enqueue(new retrofit2.Callback<ResponseBody>()
+            {
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    if(t instanceof AuthException)
+                    {
+                        Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                        ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
+                        app.redirectToLogin();
                     }
-                    @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        if(response.isSuccessful())
-                        {
-                            try {
-                                String responseString = response.body().string();
-                                int sessionID = JsonParser.parseString(responseString).getAsJsonObject().get("sessionID").getAsInt();
-                                map.setSessionID(sessionID);
-                                fileManager.saveMapToFile(map);
-                                currentCode = String.valueOf(sessionID);
-                                listAdapter.notifyDataSetChanged();
-                                new ShareMapDialogFragment().show(getSupportFragmentManager(), ShareMapDialogFragment.TAG);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }else {
-                            try {
-                                String jsonResponse = response.errorBody().string();
-                                String message = JsonParser.parseString(jsonResponse).getAsJsonObject().get("message").getAsString();
-                                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
+                    else if(t instanceof ConnectionException)
+                    {
+                        Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
                     }
-                });
-                return true;
-            case R.id.stopSharing:
-                Integer mapSessionID = map.getSessionID();
-                if(mapSessionID == null)
-                {
-                    return true;
                 }
-                apiService.deleteSession(mapSessionID).enqueue(new retrofit2.Callback<ResponseBody>()
-                {
-                    @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        if(t instanceof AuthException)
-                        {
-                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-                            ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
-                            app.redirectToLogin();
-                        }
-                        else if(t instanceof ConnectionException)
-                        {
-                            Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                    @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        if(response.isSuccessful())
-                        {
-                            map.removeSessionID();
-                            listAdapter.notifyDataSetChanged();
-                            fileManager.saveMapToFile(map);
-                        }else{
-                            try {
-                                Log.v(TAG, response.errorBody().string());
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    if(response.isSuccessful())
+                    {
+                        try {
+                            String responseString = response.body().string();
+                            int sessionID = JsonParser.parseString(responseString).getAsJsonObject().get("sessionID").getAsInt();
+                            map.setSessionID(sessionID);
+                            if(userIDStr != null)
+                            {
+                                map.setOwnerID(Integer.parseInt(userIDStr));
                             }
+                            fileManager.saveMapToFile(map);
+                            currentCode = String.valueOf(sessionID);
+                            listAdapter.notifyDataSetChanged();
+                            new ShareMapDialogFragment().show(getSupportFragmentManager(), ShareMapDialogFragment.TAG);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }else {
+                        try {
+                            String jsonResponse = response.errorBody().string();
+                            String message = JsonParser.parseString(jsonResponse).getAsJsonObject().get("message").getAsString();
+                            Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
-                });
+                }
+            });
+            return true;
+        }else if(itemID == R.id.stopSharing) {
+            Integer mapSessionID = map.getSessionID();
+            if(mapSessionID == null)
+            {
                 return true;
-            case R.id.showCode:
-                currentCode = String.valueOf(map.getSessionID());
-                new ShareMapDialogFragment().show(getSupportFragmentManager(), ShareMapDialogFragment.TAG);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+            }
+            apiService.deleteSession(mapSessionID).enqueue(new retrofit2.Callback<ResponseBody>()
+            {
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    if(t instanceof AuthException)
+                    {
+                        Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                        ArgumentMapperApplication app = (ArgumentMapperApplication) getApplication();
+                        app.redirectToLogin();
+                    }
+                    else if(t instanceof ConnectionException)
+                    {
+                        Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    if(response.isSuccessful())
+                    {
+                        map.removeSessionID();
+                        listAdapter.notifyDataSetChanged();
+                        fileManager.saveMapToFile(map);
+                    }else{
+                        try {
+                            Log.v(TAG, response.errorBody().string());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            return true;
+        }else if(itemID == R.id.showCode) {
+            currentCode = String.valueOf(map.getSessionID());
+            new ShareMapDialogFragment().show(getSupportFragmentManager(), ShareMapDialogFragment.TAG);
+            return true;
+        }else if(itemID == R.id.disconnect) {
+            map.removeSessionID();
+            listAdapter.notifyDataSetChanged();
+            fileManager.saveMapToFile(map);
+            return true;
         }
+        return super.onContextItemSelected(item);
     }
 
     private void showAddArgumentMapDialog()
@@ -265,9 +290,11 @@ public class MainActivity extends AppCompatActivity implements AddArgumentMapDia
                 if(response.isSuccessful())
                 {
                     try {
-                        String sessionMap = JsonParser.parseString(response.body().string()).getAsJsonObject().get("sessionMap").getAsString();
-                        ArgumentMap map = new ArgumentMap(gson.fromJson(sessionMap, InductiveNode.class));
+                        JsonObject jsonResponse = JsonParser.parseString(response.body().string()).getAsJsonObject();
+                        InductiveNode inductiveNode = gson.fromJson(jsonResponse.get("map_tree").getAsString(), InductiveNode.class);
+                        ArgumentMap map = new ArgumentMap(inductiveNode);
                         map.setSessionID(code);
+                        map.setOwnerID(jsonResponse.get("owner_id").getAsInt());
                         items.add(map);
                         listAdapter.notifyDataSetChanged();
                         fileManager.saveMapToFile(map);

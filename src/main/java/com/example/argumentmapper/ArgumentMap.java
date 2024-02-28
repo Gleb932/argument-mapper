@@ -11,6 +11,7 @@ public class ArgumentMap implements Parcelable {
     private InductiveNode root;
     transient private String filename;
     private Integer sessionID;
+    private Integer ownerID;
 
     public ArgumentMap(String description)
     {
@@ -33,6 +34,7 @@ public class ArgumentMap implements Parcelable {
     public ArgumentMap(Parcel in) {
         filename = in.readString();
         sessionID = (Integer)in.readValue(Integer.class.getClassLoader());
+        ownerID = (Integer)in.readValue(Integer.class.getClassLoader());
         root = in.readParcelable(MapNode.class.getClassLoader());
     }
 
@@ -63,6 +65,8 @@ public class ArgumentMap implements Parcelable {
     public Integer getSessionID() {return this.sessionID;}
     public void setSessionID(int sessionID) {this.sessionID = sessionID;}
     public void removeSessionID(){this.sessionID = null;}
+    public Integer getOwnerID() {return this.ownerID;}
+    public void setOwnerID(Integer ownerID) {this.ownerID = ownerID;}
     public String getFilename()
     {
         return filename;
@@ -82,6 +86,7 @@ public class ArgumentMap implements Parcelable {
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(filename);
         parcel.writeValue(sessionID);
+        parcel.writeValue(ownerID);
         parcel.writeParcelable(root, 0);
     }
 

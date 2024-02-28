@@ -5,5 +5,8 @@
     <item android:id="@+id/showCode"
         android:title="Show code" />
     <item android:id="@+id/stopSharing"
+        android:visible="false"
         android:title="Stop sharing" />
+    <item android:id="@+id/disconnect"
+        android:title="Disconnect" />
 </menu>

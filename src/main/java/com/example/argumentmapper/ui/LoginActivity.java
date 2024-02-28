@@ -3,6 +3,7 @@ package com.example.argumentmapper.ui;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -20,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import javax.inject.Inject;
 
@@ -64,8 +66,18 @@ public class LoginActivity extends AppCompatActivity {
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     try {
                         if (response.isSuccessful()) {
-                            JSONObject jsonToken = new JSONObject(response.body().string());
-                            sharedPreferences.edit().putString("access_token", jsonToken.getString("access_token")).apply();
+                            String jsonToken = new JSONObject(response.body().string()).getString("access_token");
+                            String[] chunks = jsonToken.split("\\.");
+                            byte[] bytes = android.util.Base64.decode(chunks[1], Base64.URL_SAFE);
+                            String payload = new String(bytes, StandardCharsets.UTF_8);
+                            JSONObject jsonPayload = new JSONObject(payload);
+
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putString("access_token", jsonToken);
+                            editor.putString("user_ID", jsonPayload.getString("userID"));
+                            editor.putString("username", jsonPayload.getString("username"));
+                            editor.putString("role", jsonPayload.getString("role"));
+                            editor.apply();
                             LoginActivity.this.finish();
                         }else {
                             JSONObject jsonError = new JSONObject(response.errorBody().string());
